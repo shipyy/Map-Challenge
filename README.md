@@ -16,8 +16,7 @@ You can customize the map, style, duration of the callenge and points received.
 ## Requirements
 
 **Libraries**
-* [Surftimer.inc](https://github.com/shipyy/Map-Challenge/blob/main/include/surftimer.inc)
-* [ColorLib](https://github.com/c0rp3n/colorlib-sm)
+* Same Requirements of [SurfTimer](https://github.com/surftimer/SurfTimer)
 
 **Plugins**
 * [SurfTimer](https://github.com/surftimer/SurfTimer)
