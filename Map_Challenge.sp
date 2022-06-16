@@ -90,7 +90,7 @@ public void db_CheckChallengeActive()
 {
     char szQuery[255];
     PrintToServer(szQuery);
-    Format(szQuery, sizeof(szQuery), "SELECT id, active, mapname, TIMESTAMPDIFF(SECOND,CURRENT_TIMESTAMP, EndDate) as Time_Diff FROM ck_challenges ORDER BY id DESC LIMIT 1;");
+    Format(szQuery, sizeof(szQuery), "SELECT id, active, mapname, points, TIMESTAMPDIFF(SECOND,CURRENT_TIMESTAMP, EndDate) as Time_Diff FROM ck_challenges ORDER BY id DESC LIMIT 1;");
     SQL_TQuery(g_hDb, sql_CheckChallengeActiveCallback, szQuery, DBPrio_Low);
 }
 
@@ -107,7 +107,8 @@ public void sql_CheckChallengeActiveCallback(Handle owner, Handle hndl, const ch
         if(SQL_FetchInt(hndl, 1) == 1){
 
             //CHECK IF CURRENT TIME STAMP IS NEWER THAN HE END_DATE OF THE CURRENT CHALLENGE
-            int time_diff = SQL_FetchInt(hndl, 3);
+            int time_diff = SQL_FetchInt(hndl, 4);
+            g_iChallenge_Points = SQL_FetchInt(hndl, 3);
 
             g_iChallenge_ID = SQL_FetchInt(hndl, 0);
 
@@ -127,7 +128,7 @@ public void sql_CheckChallengeActiveCallback(Handle owner, Handle hndl, const ch
         }
         else{
             g_bIsChallengeActive = false;
-            g_iChallenge_ID = -1;
+            g_iChallenge_ID = SQL_FetchInt(hndl, 0);
             SQL_FetchString(hndl, 2, g_sChallenge_MapName, sizeof(g_sChallenge_MapName));
         }
         PrintToServer("\n\n\n---CHECKED CHALLENGE---\n\n\n");
@@ -252,6 +253,7 @@ public void db_AddChallenge(int client, char szMapName[32], int style, int point
 public void SQLTxn_AddChallenge_Success(Handle db, any data, int numQueries, Handle[] results, any[] queryData)
 {   
     g_bIsChallengeActive = true;
+    g_iChallenge_ID = g_iChallenge_ID + 1;
     CPrintToChatAll("%t", "Challenge_Added", g_szChatPrefix, g_sChallenge_MapName);
     PrintToServer("[Map Challenge] Challenge Successfully Created");
 }
@@ -290,19 +292,15 @@ public void sql_EndCurrentChallengeCallback(Handle owner, Handle hndl, const cha
         return;
     }
     else{
-
+        db_DistributePoints();
         //SET DEFAULTS
         g_bIsChallengeActive = false;
         g_bIsCurrentMapChallenge = false;
-        g_iChallenge_ID = g_iChallenge_ID + 1; // incremented because challenges could be being created/deleted within the same map session
 
         g_iChallenge_Initial_TimeStamp = 0;
         g_iChallenge_Final_TimeStamp = 0;
-        g_iChallenge_Points = 0;
         g_iChallenge_Style = 0;
         g_sChallenge_MapName = "";
-
-        CPrintToChatAll("%t", "Challenge_Ended", g_szChatPrefix);
     }
 }
 
@@ -430,6 +428,7 @@ public void db_SelectChallengeTop(int client){
     if(g_bIsChallengeActive){
         char szQuery[255];
         Format(szQuery, sizeof(szQuery), "SELECT name, runtime FROM ck_challenge_times WHERE id = '%i' ORDER BY runtime ASC LIMIT 50;", g_iChallenge_ID);
+        PrintToServer(szQuery);
         SQL_TQuery(g_hDb, sql_SelectChallengeTopCallback, szQuery, client, DBPrio_Low);
     }
     else{
@@ -440,58 +439,65 @@ public void db_SelectChallengeTop(int client){
 
 public void sql_SelectChallengeTopCallback(Handle owner, Handle hndl, const char[] error, any client)
 {
-	if (hndl == null)
-	{
-		LogError("[Map Challenge] SQL Error (sql_SelectChallengeTopCallback): %s", error);
-		return;
-	}
+    if (hndl == null)
+    {
+        LogError("[Map Challenge] SQL Error (sql_SelectChallengeTopCallback): %s", error);
+        return;
+    }
+    
+    if (SQL_HasResultSet(hndl)){
 
-        if (SQL_HasResultSet(hndl)){
+        Menu menu = new Menu(Menu_ChallengeTopHandler);
+        menu.SetTitle("Map Challenge TOP for %s \n    Rank    Time               Player\n", g_sChallenge_MapName);
 
-            Menu menu = new Menu(Menu_ChallengeTopHandler);
-            menu.SetTitle("Map Challenge TOP for %s \n    Rank    Time               Player\n", g_sChallenge_MapName);
+        char szItem[64];
+        int rank=1;
 
-            char szItem[64];
-            int rank=1;
+        float rank_1_time = 0.0;
+        float runtime_difference = 0.0;
+        while(SQL_FetchRow(hndl)){
 
-            float rank_1_time = 0.0;
-            float runtime_difference = 0.0;
-            while(SQL_FetchRow(hndl)){
-                char szPlayerName[32];
-                SQL_FetchString(hndl, 0, szPlayerName, sizeof(szPlayerName));
+            char szPlayerName[32];
+            SQL_FetchString(hndl, 0, szPlayerName, sizeof(szPlayerName));
 
-                float player_runtime = SQL_FetchFloat(hndl, 1);
-                char szFormattedRuntime[64];
-                FormatTimeFloat(1, player_runtime, 3, szFormattedRuntime, sizeof(szFormattedRuntime));
-
-            
-                if(rank == 1){
-                    Format(szItem, sizeof(szItem), "[0%i]    | (%s) %s|   %s", rank, szFormattedRuntime, "ㅤ",szPlayerName);
-                    rank_1_time = player_runtime;
-                }
-                else{
-                    szFormattedRuntime = "";
-                    runtime_difference = rank_1_time - player_runtime;
-                    FormatTimeFloat(1, runtime_difference, 3, szFormattedRuntime, sizeof(szFormattedRuntime));
-
-                    if (rank >= 10)
-                        Format(szItem, sizeof(szItem), "[%i]    | (+%s) |   %s", rank, szFormattedRuntime, szPlayerName);
-                    else
-                        Format(szItem, sizeof(szItem), "[0%i]    | (+%s) |   %s", rank, szFormattedRuntime, szPlayerName);
-                }
-
-                AddMenuItem(menu, "", szItem);
-
-                rank++;
+            //when uysing select it always return TRUE using SQL_HasResultSet() so I just compare the value of a column to an empty string for the first row returned
+            if(strcmp(szPlayerName, "") == 0){
+                CPrintToChat(client, "%t", "Challenge_LeaderBoard_Empty", g_szChatPrefix);
+                return;
             }
-            
-            SetMenuExitButton(menu, true);
-            DisplayMenu(menu, client, MENU_TIME_FOREVER);
-            
+
+            float player_runtime = SQL_FetchFloat(hndl, 1);
+            char szFormattedRuntime[64];
+            FormatTimeFloat(client, player_runtime, 3, szFormattedRuntime, sizeof(szFormattedRuntime));
+
+        
+            if(rank == 1){
+                Format(szItem, sizeof(szItem), "[0%i]    | (%s) %s|   %s", rank, szFormattedRuntime, "ㅤ",szPlayerName);
+                rank_1_time = player_runtime;
+            }
+            else{
+                szFormattedRuntime = "";
+                runtime_difference = rank_1_time - player_runtime;
+                FormatTimeFloat(client, runtime_difference, 3, szFormattedRuntime, sizeof(szFormattedRuntime));
+
+                if (rank >= 10)
+                    Format(szItem, sizeof(szItem), "[%i]    | (+%s) |   %s", rank, szFormattedRuntime, szPlayerName);
+                else
+                    Format(szItem, sizeof(szItem), "[0%i]    | (+%s) |   %s", rank, szFormattedRuntime, szPlayerName);
+            }
+
+            AddMenuItem(menu, "", szItem);
+
+            rank++;
         }
-        else{
-            CPrintToChat(client, "%t", "Challenge_LeaderBoard_Empty", g_szChatPrefix);
-        }
+        
+        SetMenuExitButton(menu, true);
+        DisplayMenu(menu, client, MENU_TIME_FOREVER);
+        
+    }
+    else{
+        CPrintToChat(client, "%t", "Challenge_LeaderBoard_Empty", g_szChatPrefix);
+    }
 
 }
 
@@ -542,7 +548,7 @@ public void sql_GetRemainingTimeCallback(Handle owner, Handle hndl, const char[]
 
         if(timeleft > 0){
             char sztimeleft[32];
-            FormatTimeFloat(1, timeleft, 3, sztimeleft, sizeof(sztimeleft));
+            FormatTimeFloat(data, timeleft, 7, sztimeleft, sizeof(sztimeleft));
 
             CPrintToChat(data, "%t", "Challenge_Timeleft", g_szChatPrefix, sztimeleft);
         }
@@ -580,9 +586,58 @@ public void sql_Check_Challenge_EndCallback(Handle owner, Handle hndl, const cha
             db_EndCurrentChallenge(g_iChallenge_ID);
         }
         else{
-            FormatTimeFloat(1, time_diff, 3, sztimeleft, sizeof(sztimeleft));
+            FormatTimeFloat(data, time_diff, 7, sztimeleft, sizeof(sztimeleft));
 
             CPrintToChat(data, "%t", "Challenge_Timeleft", g_szChatPrefix, sztimeleft);
         }
     }
+}
+
+public void db_DistributePoints(){
+
+    char szQuery[1024];
+    Format(szQuery, sizeof(szQuery), "SELECT steamid, style FROM ck_challenge_times WHERE id = '%i' ORDER BY runtime ASC;", g_iChallenge_ID);
+    SQL_TQuery(g_hDb, sql_DistributePointsCallback, szQuery, DBPrio_Low);
+
+}
+
+public void sql_DistributePointsCallback(Handle owner, Handle hndl, const char[] error, any data)
+{
+	if (hndl == null)
+	{
+		LogError("[Map Challenge] SQL Error (sql_DistributePointsCallback): %s", error);
+		return;
+	}
+
+	if (SQL_HasResultSet(hndl)){
+        
+        int rank = 1;
+        char szPlayerSteamID[32];
+        while(SQL_FetchRow(hndl)){
+            SQL_FetchString(hndl, 0, szPlayerSteamID, sizeof(szPlayerSteamID));
+
+            int style = SQL_FetchInt(hndl, 1);
+
+            int points_to_add;
+
+            if(rank <= 10)
+                points_to_add = g_iChallenge_Points / rank;
+            else
+                points_to_add = 10;
+    
+            AddChallengePoints(szPlayerSteamID, style, points_to_add);
+
+            rank++;
+        }
+
+        CPrintToChatAll("%t", "Challenge_Points_Distributed", g_szChatPrefix);
+    }
+}
+
+public void AddChallengePoints(char szSteamID[32], int style, int points_to_add)
+{
+    char szQuery[1024];
+    PrintToServer(szQuery);
+    Format(szQuery, sizeof(szQuery), "UPDATE ck_playerrank SET challenge_points = challenge_points + %i WHERE steamid = '%s' AND style = %i;", points_to_add, szSteamID, style);
+    SQL_TQuery(g_hDb, SQL_CheckCallback, szQuery, DBPrio_Low); 
 }

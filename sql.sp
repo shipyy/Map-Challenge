@@ -70,3 +70,12 @@ public void SQLTxn_CreateDatabaseFailed(Handle db, any data, int numQueries, con
 {
 	SetFailState("[SurfTimer] Database tables could not be created! Error: %s", error);
 }
+
+public void SQL_CheckCallback(Handle owner, Handle hndl, const char[] error, any data)
+{
+	if (hndl == null)
+	{
+		LogError("[SurfTimer] SQL Error (SQL_CheckCallback): %s", error);
+		return;
+	}
+}

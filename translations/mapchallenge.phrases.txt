@@ -23,7 +23,7 @@
     "Challenge_Timeleft"
 	{
 		"#format"	"{1:s},{2:s}"
-		"en"		"{blue}{1}{default} | {blue}{2}"
+		"en"		"{blue}{1}{default} | {yellow}{2}"
 	}
     "Add_Challenge_ERROR_Format"
 	{
@@ -39,5 +39,10 @@
 	{
 		"#format"	"{1:s}"
 		"en"		"{blue}{1}{default} | {red}There are no times for the challenge yet."
+	}
+    "Challenge_Points_Distributed"
+	{
+		"#format"	"{1:s}"
+		"en"		"{blue}{1}{default} | {red}The rewardsh have been distributed."
 	}
 }
