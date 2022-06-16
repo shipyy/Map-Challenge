@@ -74,6 +74,7 @@ public void OnMapStart(){
     db_setupDatabase();
 
     //COMMANDS
+    RegConsoleCmd("sm_challenge", Challenge_Info, "[surftimer] Displays additional information of the ongoing challenge");
     RegConsoleCmd("sm_ct", LeaderBoard, "[surftimer] Displays the ongoing challenge leaderboard (TOP 50)");
     RegConsoleCmd("sm_ctl", Challenge_Timeleft, "[surftimer] Displays remaining time left of the current challenge");
     RegAdminCmd("sm_add_challenge", Create_Challenge, ADMFLAG_ROOT, "[surfTimer] Add new challenge");
@@ -620,10 +621,12 @@ public void sql_DistributePointsCallback(Handle owner, Handle hndl, const char[]
 
             int points_to_add;
 
-            if(rank <= 10)
-                points_to_add = g_iChallenge_Points / rank;
+            if(rank == 1)
+                points_to_add = g_iChallenge_Points;
+            if(1 < rank <= 10)
+                points_to_add = RoundToFloor((g_iChallenge_Points / 2) * ((10 - rank) * 0.100));
             else
-                points_to_add = 10;
+                points_to_add = 5;
     
             AddChallengePoints(szPlayerSteamID, style, points_to_add);
 
@@ -640,4 +643,86 @@ public void AddChallengePoints(char szSteamID[32], int style, int points_to_add)
     PrintToServer(szQuery);
     Format(szQuery, sizeof(szQuery), "UPDATE ck_playerrank SET challenge_points = challenge_points + %i WHERE steamid = '%s' AND style = %i;", points_to_add, szSteamID, style);
     SQL_TQuery(g_hDb, SQL_CheckCallback, szQuery, DBPrio_Low); 
+}
+
+public Action Challenge_Info(int client, int args)
+{   
+    if(!IsValidClient(client))
+        return Plugin_Handled;
+
+    char szQuery[1024];
+    PrintToServer(szQuery);
+    Format(szQuery, sizeof(szQuery), "SELECT *, TIMESTAMPDIFF(SECOND,CURRENT_TIMESTAMP, EndDate) as Time_Diff FROM ck_challenges WHERE active = 1;");
+    SQL_TQuery(g_hDb, SQL_Challenge_InfoCallback, szQuery, client, DBPrio_Low); 
+
+    return Plugin_Handled;
+}
+
+public void SQL_Challenge_InfoCallback(Handle owner, Handle hndl, const char[] error, any data)
+{
+	if (hndl == null)
+	{
+		LogError("[Map Challenge] SQL Error (SQL_Challenge_InfoCallback): %s", error);
+		return;
+	}
+
+	if (SQL_HasResultSet(hndl) && SQL_FetchRow(hndl)){
+        
+        Menu Challenge_Info_Menu = new Menu(Menu_Challenge_Info_Handler);
+        Challenge_Info_Menu.SetTitle("Challenge Info\n");
+
+        char szItem[64];
+
+        //LOAD ALL THE VARIABLES
+        int id = SQL_FetchInt(hndl, 0);
+
+        char szMapName[32];
+        SQL_FetchString(hndl, 1, szMapName, sizeof(szMapName));
+
+        char Start_Date[32];
+        SQL_FetchString(hndl, 2, Start_Date, sizeof(Start_Date));
+
+        char End_Date[32];
+        SQL_FetchString(hndl, 3, End_Date, sizeof(End_Date));
+
+        int points = SQL_FetchInt(hndl, 5);
+
+        float timeleft = SQL_FetchInt(hndl, 6) * 1.0;
+
+        //FORMAT VARIABLES
+        Format(szItem, sizeof(szItem), "Challenge # : %d", id);
+        AddMenuItem(Challenge_Info_Menu, "", szItem, ITEMDRAW_DISABLED);
+
+        Format(szItem, sizeof(szItem), "Map : %s", szMapName);
+        AddMenuItem(Challenge_Info_Menu, "", szItem, ITEMDRAW_DISABLED);
+
+        Format(szItem, sizeof(szItem), "Started : %s", Start_Date);
+        AddMenuItem(Challenge_Info_Menu, "", szItem, ITEMDRAW_DISABLED);
+
+        Format(szItem, sizeof(szItem), "Ends : %s", End_Date);
+        AddMenuItem(Challenge_Info_Menu, "", szItem, ITEMDRAW_DISABLED);
+
+        char sztimeleft[32];
+        FormatTimeFloat(data, timeleft, 7, sztimeleft, sizeof(sztimeleft));
+        Format(szItem, sizeof(szItem), "TimeLeft : %s", sztimeleft);
+        AddMenuItem(Challenge_Info_Menu, "", szItem, ITEMDRAW_DISABLED);
+
+        Format(szItem, sizeof(szItem), "Rank 1 Points : %d", points);
+        AddMenuItem(Challenge_Info_Menu, "", szItem, ITEMDRAW_DISABLED);
+
+        SetMenuExitButton(Challenge_Info_Menu, true);
+        DisplayMenu(Challenge_Info_Menu, data, MENU_TIME_FOREVER);
+
+    }
+}
+
+public int Menu_Challenge_Info_Handler(Menu menu, MenuAction action, int param1, int param2)
+{   
+    if (action == MenuAction_Select)
+        return 0;
+	else if(action == MenuAction_End){
+		delete menu;
+    }
+    
+    return 0;
 }
