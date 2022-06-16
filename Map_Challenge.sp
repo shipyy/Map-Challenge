@@ -37,7 +37,7 @@ char g_szMapName[128];
 // Client's steamID
 char g_szSteamID[MAXPLAYERS + 1][32];
 
-char g_szChatPrefix[64] = "[MAP CHALLENGE]";
+char g_szChatPrefix[64] = "MAP CHALLENGE";
 
 /* ----- INCLUDES ----- */
 #include <surftimer>
@@ -75,6 +75,7 @@ public void OnMapStart(){
 
     //COMMANDS
     RegConsoleCmd("sm_ct", LeaderBoard, "[surftimer] Displays the ongoing challenge leaderboard (TOP 50)");
+    RegConsoleCmd("sm_ctl", Challenge_Timeleft, "[surftimer] Displays remaining time left of the current challenge");
     RegAdminCmd("sm_add_challenge", Create_Challenge, ADMFLAG_ROOT, "[surfTimer] Add new challenge");
     RegAdminCmd("sm_end_challenge", Manual_ChallengeEnd, ADMFLAG_ROOT, "[surfTimer] Ends the ongoing challenge");
 
@@ -119,6 +120,9 @@ public void sql_CheckChallengeActiveCallback(Handle owner, Handle hndl, const ch
                 SQL_FetchString(hndl, 2, g_sChallenge_MapName, sizeof(g_sChallenge_MapName));
                 if(strcmp(g_szMapName, g_sChallenge_MapName))
                     g_bIsCurrentMapChallenge = true;
+
+                //Timer that check regularly if the time remaining of current challenge has run out
+                CreateTimer(100.0, Check_Challenge_End, INVALID_HANDLE, TIMER_FLAG_NO_MAPCHANGE | TIMER_REPEAT);
             }
         }
         else{
@@ -412,7 +416,10 @@ public void sql_UpdateTimesCallback(Handle owner, Handle hndl, const char[] erro
 
 //SHOW CHALLENGE LEADERBOARD
 public Action LeaderBoard(int client, int args)
-{
+{   
+    if(!IsValidClient(client))
+        return Plugin_Handled;
+
     db_SelectChallengeTop(client);
 
     return Plugin_Handled;
@@ -495,4 +502,87 @@ public int Menu_ChallengeTopHandler(Menu menu, MenuAction action, int param1, in
 	}
 
 	return 0;
+}
+
+//SHOW CHALLENGE LEADERBOARD
+public Action Challenge_Timeleft(int client, int args)
+{
+    if(!IsValidClient(client))
+        return Plugin_Handled;
+
+    db_GetRemainingTime(client);
+
+    return Plugin_Handled;
+}
+
+public void db_GetRemainingTime(int client){
+
+    if(g_bIsChallengeActive){
+        char szQuery[255];
+        Format(szQuery, sizeof(szQuery), "SELECT TIMESTAMPDIFF(SECOND,CURRENT_TIMESTAMP, EndDate) as Time_Diff FROM ck_challenges WHERE id = '%i';", g_iChallenge_ID);
+        SQL_TQuery(g_hDb, sql_GetRemainingTimeCallback, szQuery, client, DBPrio_Low);
+    }
+    else{
+        CPrintToChat(client, "%t", "Challenge_Inactive", g_szChatPrefix);
+    }
+
+}
+
+public void sql_GetRemainingTimeCallback(Handle owner, Handle hndl, const char[] error, any data)
+{
+	if (hndl == null)
+	{
+		LogError("[Map Challenge] SQL Error (sql_GetRemainingTimeCallback): %s", error);
+		return;
+	}
+
+	if (SQL_HasResultSet(hndl) && SQL_FetchRow(hndl)){
+
+        float timeleft = SQL_FetchInt(hndl, 0) * 1.0;
+
+        if(timeleft > 0){
+            char sztimeleft[32];
+            FormatTimeFloat(1, timeleft, 3, sztimeleft, sizeof(sztimeleft));
+
+            CPrintToChat(data, "%t", "Challenge_Timeleft", g_szChatPrefix, sztimeleft);
+        }
+    }
+
+}
+
+public Action Check_Challenge_End(Handle timer)
+{
+
+    char szQuery[1024];
+    PrintToServer(szQuery);
+    Format(szQuery, sizeof(szQuery), "SELECT TIMESTAMPDIFF(SECOND,CURRENT_TIMESTAMP, EndDate) as Time_Diff FROM ck_challenges WHERE id = '%i';", g_iChallenge_ID);
+    SQL_TQuery(g_hDb, sql_Check_Challenge_EndCallback, szQuery, DBPrio_Low);
+
+    return Plugin_Handled;
+
+}
+
+public void sql_Check_Challenge_EndCallback(Handle owner, Handle hndl, const char[] error, any data)
+{
+	if (hndl == null)
+	{
+		LogError("[Map Challenge] SQL Error (sql_Check_Challenge_EndCallback): %s", error);
+		return;
+	}
+
+	if (SQL_HasResultSet(hndl) && SQL_FetchRow(hndl)){
+
+        float time_diff = SQL_FetchInt(hndl, 0) * 1.0;
+
+        char sztimeleft[32];
+
+        if(time_diff <= 0){
+            db_EndCurrentChallenge(g_iChallenge_ID);
+        }
+        else{
+            FormatTimeFloat(1, time_diff, 3, sztimeleft, sizeof(sztimeleft));
+
+            CPrintToChat(data, "%t", "Challenge_Timeleft", g_szChatPrefix, sztimeleft);
+        }
+    }
 }

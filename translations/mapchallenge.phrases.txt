@@ -20,6 +20,11 @@
 		"#format"	"{1:s}"
 		"en"		"{blue}{1}{default} | {red}Ongoing Challenge has ended."
 	}
+    "Challenge_Timeleft"
+	{
+		"#format"	"{1:s},{2:s}"
+		"en"		"{blue}{1}{default} | {blue}{2}"
+	}
     "Add_Challenge_ERROR_Format"
 	{
 		"#format"	"{1:s}"
