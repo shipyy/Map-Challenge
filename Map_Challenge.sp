@@ -658,14 +658,14 @@ public Action Challenge_Info(int client, int args)
 
 public void SQL_Challenge_InfoCallback(Handle owner, Handle hndl, const char[] error, any data)
 {
-	if (hndl == null)
+    if (hndl == null)
 	{
 		LogError("[Map Challenge] SQL Error (SQL_Challenge_InfoCallback): %s", error);
 		return;
-	}
+    }
 
-	if (SQL_HasResultSet(hndl) && SQL_FetchRow(hndl)){
-        
+    if (SQL_HasResultSet(hndl) && SQL_FetchRow(hndl))
+    {
         Menu Challenge_Info_Menu = new Menu(Menu_Challenge_Info_Handler);
         Challenge_Info_Menu.SetTitle("Challenge Info\n");
 
@@ -710,7 +710,9 @@ public void SQL_Challenge_InfoCallback(Handle owner, Handle hndl, const char[] e
 
         SetMenuExitButton(Challenge_Info_Menu, true);
         DisplayMenu(Challenge_Info_Menu, data, MENU_TIME_FOREVER);
-
+    }
+    else{
+        CPrintToChat(data, "%t", "Challenge_Inactive", g_szChatPrefix);
     }
 }
 
