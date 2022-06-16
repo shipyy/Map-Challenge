@@ -89,7 +89,7 @@ public void db_CheckChallengeActive()
 {
     char szQuery[255];
     PrintToServer(szQuery);
-    Format(szQuery, sizeof(szQuery), "SELECT id, active, mapname FROM ck_challenges ORDER BY id DESC LIMIT 1;");
+    Format(szQuery, sizeof(szQuery), "SELECT id, active, mapname, TIMESTAMPDIFF(SECOND,CURRENT_TIMESTAMP, EndDate) as Time_Diff FROM ck_challenges ORDER BY id DESC LIMIT 1;");
     SQL_TQuery(g_hDb, sql_CheckChallengeActiveCallback, szQuery, DBPrio_Low);
 }
 
@@ -104,15 +104,24 @@ public void sql_CheckChallengeActiveCallback(Handle owner, Handle hndl, const ch
 	// Found old time from database
 	if (SQL_HasResultSet(hndl) && SQL_FetchRow(hndl)){
         if(SQL_FetchInt(hndl, 1) == 1){
-            PrintToServer("ACTIVE\n\n\n\n");
-            g_bIsChallengeActive = true;
+
+            //CHECK IF CURRENT TIME STAMP IS NEWER THAN HE END_DATE OF THE CURRENT CHALLENGE
+            int time_diff = SQL_FetchInt(hndl, 3);
+
             g_iChallenge_ID = SQL_FetchInt(hndl, 0);
-            SQL_FetchString(hndl, 2, g_sChallenge_MapName, sizeof(g_sChallenge_MapName));
-            if(strcmp(g_szMapName, g_sChallenge_MapName))
-                g_bIsCurrentMapChallenge = true;
+
+            //REACHED END OF CHALLENGE
+            if(time_diff <= 0){
+                db_EndCurrentChallenge(g_iChallenge_ID);
+            }
+            else{
+                g_bIsChallengeActive = true;
+                SQL_FetchString(hndl, 2, g_sChallenge_MapName, sizeof(g_sChallenge_MapName));
+                if(strcmp(g_szMapName, g_sChallenge_MapName))
+                    g_bIsCurrentMapChallenge = true;
+            }
         }
         else{
-            PrintToServer("NOT ACTIVE\n\n\n\n");
             g_bIsChallengeActive = false;
             g_iChallenge_ID = -1;
             SQL_FetchString(hndl, 2, g_sChallenge_MapName, sizeof(g_sChallenge_MapName));
