@@ -74,11 +74,11 @@ public void OnMapStart(){
     db_setupDatabase();
 
     //COMMANDS
-    RegConsoleCmd("sm_challenge", Challenge_Info, "[surftimer] Displays additional information of the ongoing challenge");
-    RegConsoleCmd("sm_ct", LeaderBoard, "[surftimer] Displays the ongoing challenge leaderboard (TOP 50)");
-    RegConsoleCmd("sm_ctl", Challenge_Timeleft, "[surftimer] Displays remaining time left of the current challenge");
-    RegAdminCmd("sm_add_challenge", Create_Challenge, ADMFLAG_ROOT, "[surfTimer] Add new challenge");
-    RegAdminCmd("sm_end_challenge", Manual_ChallengeEnd, ADMFLAG_ROOT, "[surfTimer] Ends the ongoing challenge");
+    RegConsoleCmd("sm_challenge", Challenge_Info, "[Map Challenge] Displays additional information of the ongoing challenge");
+    RegConsoleCmd("sm_ct", LeaderBoard, "[Map Challenge] Displays the ongoing challenge leaderboard (TOP 50)");
+    RegConsoleCmd("sm_ctl", Challenge_Timeleft, "[Map Challenge] Displays remaining time left of the current challenge");
+    RegAdminCmd("sm_add_challenge", Create_Challenge, ADMFLAG_ROOT, "[Map Challenge] Add new challenge");
+    RegAdminCmd("sm_end_challenge", Manual_ChallengeEnd, ADMFLAG_ROOT, "[Map Challenge] Ends the ongoing challenge");
 
     //CURRENT MAP NAME
     GetCurrentMap(g_szMapName, sizeof(g_szMapName));
@@ -99,7 +99,7 @@ public void sql_CheckChallengeActiveCallback(Handle owner, Handle hndl, const ch
 {
 	if (hndl == null)
 	{
-		LogError("[SurfTimer] SQL Error (sql_CheckChallengeActiveCallback): %s", error);
+		LogError("[Map Challenge] SQL Error (sql_CheckChallengeActiveCallback): %s", error);
 		return;
 	}
 
@@ -190,7 +190,7 @@ public void sql_selectMapNameEqualsCallback(Handle owner, Handle hndl, const cha
 {
     if (hndl == null)
     {
-        LogError("[SurfTimer] SQL Error (sql_selectMapNameEqualsCallback): %s", error);
+        LogError("[Map Challenge] SQL Error (sql_selectMapNameEqualsCallback): %s", error);
         CloseHandle(pack);
         return;
     }
@@ -338,7 +338,7 @@ public void sql_TimesExistsCheckCallback(Handle owner, Handle hndl, const char[]
 {
 	if (hndl == null)
 	{
-		LogError("[SurfTimer] SQL Error (sql_TimesExistsCheckCallback): %s", error);
+		LogError("[Map Challenge] SQL Error (sql_TimesExistsCheckCallback): %s", error);
 		CloseHandle(pack);
 		return;
 	}
@@ -687,10 +687,10 @@ public void SQL_Challenge_InfoCallback(Handle owner, Handle hndl, const char[] e
 
         int points = SQL_FetchInt(hndl, 5);
 
-        float timeleft = SQL_FetchInt(hndl, 6) * 1.0;
+        float timeleft = SQL_FetchInt(hndl, 7) * 1.0;
 
         //FORMAT VARIABLES
-        Format(szItem, sizeof(szItem), "Challenge # : %d", id);
+        Format(szItem, sizeof(szItem), "Challenge # %d", id);
         AddMenuItem(Challenge_Info_Menu, "", szItem, ITEMDRAW_DISABLED);
 
         Format(szItem, sizeof(szItem), "Map : %s", szMapName);

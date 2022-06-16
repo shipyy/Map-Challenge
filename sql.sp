@@ -9,7 +9,7 @@ public void db_setupDatabase()
 
 	if (g_hDb == null)
 	{
-		SetFailState("[SurfTimer] Unable to connect to database (%s)", szError);
+		SetFailState("[Map Challenge] Unable to connect to database (%s)", szError);
 		return;
 	}
 
@@ -23,12 +23,12 @@ public void db_setupDatabase()
 	}
 	else if (strcmp(szIdent, "sqlite", false) == 0)
 	{
-		SetFailState("[SurfTimer] Sorry SQLite is not supported.");
+		SetFailState("[Map Challenge] Sorry SQLite is not supported.");
 		return;
 	}
 	else
 	{
-		SetFailState("[SurfTimer] Invalid database type");
+		SetFailState("[Map Challenge] Invalid database type");
 		return;
 	}
 
@@ -63,19 +63,19 @@ public void db_createTables()
 
 public void SQLTxn_CreateDatabaseSuccess(Handle db, any data, int numQueries, Handle[] results, any[] queryData)
 {
-	PrintToServer("[SurfTimer] Database tables succesfully created!");
+	PrintToServer("[Map Challenge] Database tables succesfully created!");
 }
 
 public void SQLTxn_CreateDatabaseFailed(Handle db, any data, int numQueries, const char[] error, int failIndex, any[] queryData)
 {
-	SetFailState("[SurfTimer] Database tables could not be created! Error: %s", error);
+	SetFailState("[Map Challenge] Database tables could not be created! Error: %s", error);
 }
 
 public void SQL_CheckCallback(Handle owner, Handle hndl, const char[] error, any data)
 {
 	if (hndl == null)
 	{
-		LogError("[SurfTimer] SQL Error (SQL_CheckCallback): %s", error);
+		LogError("[Map Challenge] SQL Error (SQL_CheckCallback): %s", error);
 		return;
 	}
 }
