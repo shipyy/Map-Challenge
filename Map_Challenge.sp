@@ -47,9 +47,7 @@ char g_szChatPrefix[64] = "MAP CHALLENGE";
 #include "misc.sp"
 
 stock bool IsValidClient(int client)
-{
-    PrintToServer("client index : %d", client);
-    
+{   
     if (client >= 1 && client <= MaxClients && IsClientInGame(client))
         return true;
     return false;
