@@ -1,0 +1,33 @@
+"Phrases"
+{   
+    "Challenge_Added"
+	{
+		"#format"	"{1:s},{2:s}"
+		"en"		"{blue}{1}{default} | Added new Challenge for {red}{2}{default}."
+	}
+    "Challenge_Active"
+	{
+		"#format"	"{1:s}"
+		"en"		"{blue}{1}{default} | {red}There is already a challenge going on."
+	}
+    "Challenge_Inactive"
+	{
+		"#format"	"{1:s}"
+		"en"		"{blue}{1}{default} | {red}There is no challenge going on."
+	}
+    "Challenge_Ended"
+	{
+		"#format"	"{1:s}"
+		"en"		"{blue}{1}{default} | {red}Ongoing Challenge has ended."
+	}
+    "Add_Challenge_ERROR_Format"
+	{
+		"#format"	"{1:s}"
+		"en"		"{blue}{1}{default} | {red}Wrong Format u should use sm_add_challenge <mapname> <style> <points> <duration>."
+	}
+    "Map_Not_Valid"
+	{
+		"#format"	"{1:s},{2:s}"
+		"en"		"{blue}{1}{default} | Map {red}{2}{default} not found."
+	}
+}
