@@ -30,4 +30,9 @@
 		"#format"	"{1:s},{2:s}"
 		"en"		"{blue}{1}{default} | Map {red}{2}{default} not found."
 	}
+    "Challenge_LeaderBoard_Empty"
+	{
+		"#format"	"{1:s}"
+		"en"		"{blue}{1}{default} | {red}There are no times for the challenge yet."
+	}
 }

@@ -433,7 +433,7 @@ public void sql_SelectChallengeTopCallback(Handle owner, Handle hndl, const char
         if (SQL_HasResultSet(hndl)){
 
             Menu menu = new Menu(Menu_ChallengeTopHandler);
-            menu.SetTitle("Challenge TOP");
+            menu.SetTitle("Map Challenge TOP for %s \n    Rank    Time               Player\n", g_sChallenge_MapName);
 
             char szItem[64];
             int rank=1;
@@ -450,7 +450,7 @@ public void sql_SelectChallengeTopCallback(Handle owner, Handle hndl, const char
 
             
                 if(rank == 1){
-                    Format(szItem, sizeof(szItem), "%i.%s | (%s)", rank, szPlayerName,  szFormattedRuntime);
+                    Format(szItem, sizeof(szItem), "[0%i]    | (%s) %s|   %s", rank, szFormattedRuntime, "ㅤ",szPlayerName);
                     rank_1_time = player_runtime;
                 }
                 else{
@@ -458,16 +458,23 @@ public void sql_SelectChallengeTopCallback(Handle owner, Handle hndl, const char
                     runtime_difference = rank_1_time - player_runtime;
                     FormatTimeFloat(1, runtime_difference, 3, szFormattedRuntime, sizeof(szFormattedRuntime));
 
-                    Format(szItem, sizeof(szItem), "%i.%s | (+%s)",  rank, szPlayerName,  szFormattedRuntime);
+                    if (rank >= 10)
+                        Format(szItem, sizeof(szItem), "[%i]    | (+%s) |   %s", rank, szFormattedRuntime, szPlayerName);
+                    else
+                        Format(szItem, sizeof(szItem), "[0%i]    | (+%s) |   %s", rank, szFormattedRuntime, szPlayerName);
                 }
 
                 AddMenuItem(menu, "", szItem);
 
                 rank++;
             }
+            
+            SetMenuExitButton(menu, true);
+            DisplayMenu(menu, client, MENU_TIME_FOREVER);
+            
         }
         else{
-            CPrintToChat(client, "%t", "Challenge_Inactive", g_szChatPrefix);
+            CPrintToChat(client, "%t", "Challenge_LeaderBoard_Empty", g_szChatPrefix);
         }
 
 }
