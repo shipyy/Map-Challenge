@@ -15,14 +15,14 @@ You can customize the map, style, duration of the callenge and points received.
 
 ## Requirements
 
-** Libraries **
+**Libraries**
 * [Surftimer.inc]([https://github.com/peace-maker/DHooks2](https://github.com/shipyy/Map-Challenge/blob/main/include/surftimer.inc))
 * [ColorLib](https://github.com/c0rp3n/colorlib-sm)
 
-** Plugins **
+**Plugins**
 * [SurfTimer](https://github.com/surftimer/SurfTimer)
 
-** Commits **
+**Commits**
 * https://github.com/shipyy/Surftimer-Official/commit/e2001205b0e80c4ccc8cf6440bb49ec67850dee1
 * https://github.com/shipyy/Surftimer-Official/commit/4c671ce35f356b74297ab71acc09b4bc147e6efe
 
