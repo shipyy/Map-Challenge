@@ -27,6 +27,7 @@ bool g_bIsCurrentMapChallenge = false;
 
 int g_iChallenge_Initial_TimeStamp;
 int g_iChallenge_Final_TimeStamp;
+//int g_iChallenge_Duration;
 //int g_iCurrent_TimeStamp;
 int g_iChallenge_Points;
 int g_iChallenge_Style;
@@ -39,12 +40,16 @@ char g_szSteamID[MAXPLAYERS + 1][32];
 
 char g_szChatPrefix[64] = "MAP CHALLENGE";
 
+GlobalForward g_NewChallengeForward;
+
 /* ----- INCLUDES ----- */
 #include <surftimer>
 #include <colorlib>
+#include <map-challenge>
 #include "queries.sp"
 #include "sql.sp"
 #include "misc.sp"
+#include "api.sp"
 
 stock bool IsValidClient(int client)
 {   
@@ -64,6 +69,8 @@ public void OnPluginStart()
     
     // reload language files
     LoadTranslations("mapchallenge.phrases");
+
+    Register_Forwards();
 
 }
 
@@ -85,11 +92,20 @@ public void OnMapStart(){
     db_CheckChallengeActive();
 }
 
+public void OnClientPutInServer(int client)
+{   
+    if (!IsValidClient(client))
+		return;
+        
+    GetClientAuthId(client, AuthId_Steam2, g_szSteamID[client], MAX_NAME_LENGTH, true);
+}
+
 public void db_CheckChallengeActive()
 {
     char szQuery[255];
     PrintToServer(szQuery);
-    Format(szQuery, sizeof(szQuery), "SELECT id, active, mapname, points, TIMESTAMPDIFF(SECOND,CURRENT_TIMESTAMP, EndDate) as Time_Diff FROM ck_challenges ORDER BY id DESC LIMIT 1;");
+    Format(szQuery, sizeof(szQuery), "SELECT id, active, mapname, points, UNIX_TIMESTAMP(StartDate), UNIX_TIMESTAMP(EndDate), TIMESTAMPDIFF(SECOND,CURRENT_TIMESTAMP, EndDate) as Time_Diff FROM ck_challenges ORDER BY id DESC LIMIT 1;");
+    PrintToServer(szQuery);
     SQL_TQuery(g_hDb, sql_CheckChallengeActiveCallback, szQuery, DBPrio_Low);
 }
 
@@ -104,9 +120,12 @@ public void sql_CheckChallengeActiveCallback(Handle owner, Handle hndl, const ch
 	// Found old time from database
 	if (SQL_HasResultSet(hndl) && SQL_FetchRow(hndl)){
         if(SQL_FetchInt(hndl, 1) == 1){
+            
+            g_iChallenge_Initial_TimeStamp = SQL_FetchInt(hndl, 4);
+            g_iChallenge_Final_TimeStamp = SQL_FetchInt(hndl, 5);
 
             //CHECK IF CURRENT TIME STAMP IS NEWER THAN HE END_DATE OF THE CURRENT CHALLENGE
-            int time_diff = SQL_FetchInt(hndl, 4);
+            int time_diff = SQL_FetchInt(hndl, 6);
             g_iChallenge_Points = SQL_FetchInt(hndl, 3);
 
             g_iChallenge_ID = SQL_FetchInt(hndl, 0);
@@ -225,7 +244,8 @@ public void db_AddChallenge(int client, char szMapName[32], int style, int point
 
     //GET TIME STAMPS IN UNIX CODE
     g_iChallenge_Initial_TimeStamp = GetTime();
-    //g_iChallenge_Final_TimeStamp = g_iChallenge_Initial_TimeStamp + ( 60 * 60 * (24 * duration) );
+    g_iChallenge_Final_TimeStamp = g_iChallenge_Initial_TimeStamp + ( 60 * 60 * (24 * duration) + (3600) );
+    //g_iChallenge_Duration = duration;
 
     //FORMAT UNIX TIMESTAMPS TO THE FORMAT USED IN THE DATABASE
     FormatTime(szInitial_TimeStamp, sizeof(szInitial_TimeStamp), "%F %X", g_iChallenge_Initial_TimeStamp);
@@ -246,7 +266,7 @@ public void db_AddChallenge(int client, char szMapName[32], int style, int point
     SQL_AddQuery(add_challange_transactions, szQuery_Insert);
     SQL_AddQuery(add_challange_transactions, szQuery_Update);
 
-    SQL_ExecuteTransaction(g_hDb, add_challange_transactions, SQLTxn_AddChallenge_Success, SQLTxn_AddChallenge_Failed);
+    SQL_ExecuteTransaction(g_hDb, add_challange_transactions, SQLTxn_AddChallenge_Success , SQLTxn_AddChallenge_Failed, client);
 }
 
 public void SQLTxn_AddChallenge_Success(Handle db, any data, int numQueries, Handle[] results, any[] queryData)
@@ -255,6 +275,8 @@ public void SQLTxn_AddChallenge_Success(Handle db, any data, int numQueries, Han
     g_iChallenge_ID = g_iChallenge_ID + 1;
     CPrintToChatAll("%t", "Challenge_Added", g_szChatPrefix, g_sChallenge_MapName);
     PrintToServer("[Map Challenge] Challenge Successfully Created");
+
+    SendNewChallengeForward(data, g_sChallenge_MapName);
 }
 
 public void SQLTxn_AddChallenge_Failed(Handle db, any data, int numQueries, const char[] error, int failIndex, any[] queryData)
@@ -308,28 +330,31 @@ public Action surftimer_OnMapFinished(int client, float fRunTime, char sRunTime[
     
     if(g_bIsCurrentMapChallenge && g_bIsChallengeActive)
         db_TimesExistsCheck(client, fRunTime);
+    else
+        PrintToChatAll("NOT CHALLENGE MAP");
 
     return Plugin_Handled;
 }
 
 public void db_TimesExistsCheck(int client, float runtime)
 {
-	if (!IsValidClient(client))
+    if (!IsValidClient(client))
 		return;
-
-	Handle pack = CreateDataPack();
-	WritePackCell(pack, client);
-	WritePackFloat(pack, runtime);
+    
+    Handle pack = CreateDataPack();
+    WritePackCell(pack, client);
+    WritePackFloat(pack, runtime);
 
 	//FORMAT UNIX TIMESTAMPS TO THE FORMAT USED IN THE DATABASE
-	char szInitial_TimeStamp[32];
-	char szFinal_TimeStamp[32];
-	FormatTime(szInitial_TimeStamp, sizeof(szInitial_TimeStamp), "%F %X", g_iChallenge_Initial_TimeStamp);
-	FormatTime(szFinal_TimeStamp, sizeof(szFinal_TimeStamp), "%F %X", g_iChallenge_Final_TimeStamp);
-
-	char szQuery[255];
-	Format(szQuery, sizeof(szQuery), "SELECT runtime FROM ck_challenge_times WHERE steamid = '%s' AND mapname = '%s' AND runtimepro > -1.0 AND style = 0 AND Run_Date BETWEEN '%s' AND '%s';", g_szSteamID[client], g_szMapName, szInitial_TimeStamp, szFinal_TimeStamp);
-	SQL_TQuery(g_hDb, sql_TimesExistsCheckCallback, szQuery, pack, DBPrio_Low);
+    char szInitial_TimeStamp[32];
+    char szFinal_TimeStamp[32];
+    FormatTime(szInitial_TimeStamp, sizeof(szInitial_TimeStamp), "%F %X", g_iChallenge_Initial_TimeStamp);
+    FormatTime(szFinal_TimeStamp, sizeof(szFinal_TimeStamp), "%F %X", g_iChallenge_Final_TimeStamp);
+    
+    char szQuery[255];
+    Format(szQuery, sizeof(szQuery), "SELECT runtime FROM ck_challenge_times WHERE steamid = '%s' AND mapname = '%s' AND runtime > -1.0 AND style = 0 AND Run_Date BETWEEN '%s' AND '%s';", g_szSteamID[client], g_szMapName, szInitial_TimeStamp, szFinal_TimeStamp);
+    PrintToServer(szQuery);
+    SQL_TQuery(g_hDb, sql_TimesExistsCheckCallback, szQuery, pack, DBPrio_Low);
 }
 
 public void sql_TimesExistsCheckCallback(Handle owner, Handle hndl, const char[] error, any pack)
@@ -344,16 +369,15 @@ public void sql_TimesExistsCheckCallback(Handle owner, Handle hndl, const char[]
 	ResetPack(pack);
 	int client = ReadPackCell(pack);
 	float runtime = ReadPackFloat(pack);
-
-	if (!IsValidClient(pack))
-		return;
-
-	// Found old time from database
-	if (SQL_HasResultSet(hndl) && SQL_FetchRow(hndl))
-		db_UpdateTime(client, runtime, 0);
-	else
-		db_InsertTime(client, runtime, 0);
-
+    
+    // Found old time from database
+	if (SQL_HasResultSet(hndl) && SQL_FetchRow(hndl)){
+        if(SQL_FetchFloat(hndl, 0) >= runtime)
+            db_UpdateTime(client, runtime, 0);
+    }
+	else{
+        db_InsertTime(client, runtime, 0);
+    }
 }
 
 public void db_UpdateTime(int client, float runtime, int style)
@@ -368,7 +392,7 @@ public void db_UpdateTime(int client, float runtime, int style)
 	FormatTime(szFinal_TimeStamp, sizeof(szFinal_TimeStamp), "%F %X", g_iChallenge_Final_TimeStamp);
 
 	char szQuery[255];
-	Format(szQuery, sizeof(szQuery), "UPDATE ck_challenge_times SET runtime = '%f' WHERE steamid = '%s' AND mapname = '%s' AND runtimepro > -1.0 AND style = 0 AND Run_Date BETWEEN '%s' AND '%s';", runtime, g_szSteamID[client], g_szMapName, szInitial_TimeStamp, szFinal_TimeStamp);
+	Format(szQuery, sizeof(szQuery), "UPDATE ck_challenge_times SET runtime = '%f' WHERE steamid = '%s' AND mapname = '%s' AND runtime > -1.0 AND style = 0 AND Run_Date BETWEEN '%s' AND '%s';", runtime, g_szSteamID[client], g_szMapName, szInitial_TimeStamp, szFinal_TimeStamp);
 	SQL_TQuery(g_hDb, sql_UpdateTimesCallback, szQuery, DBPrio_Low);
 }
 
@@ -392,23 +416,20 @@ public void db_InsertTime(int client, float runtime, int style)
 	FormatTime(szFinal_TimeStamp, sizeof(szFinal_TimeStamp), "%F %X", g_iChallenge_Final_TimeStamp);
 
 	char szQuery[255];
-	Format(szQuery, sizeof(szQuery), "INSERT INTO ck_challenge_times (steamid, name, mapname, runtime, style) VALUES ('%s', '%s', '%s', '%f', '%i');", g_szSteamID[client], szName, g_szMapName, runtime, style);
+	Format(szQuery, sizeof(szQuery), "INSERT INTO ck_challenge_times (id, steamid, name, mapname, runtime, style) VALUES ('%i', '%s', '%s', '%s', '%f', '%i');", g_iChallenge_ID, g_szSteamID[client], szName, g_szMapName, runtime, style);
 	SQL_TQuery(g_hDb, sql_UpdateTimesCallback, szQuery, DBPrio_Low);
 }
 
 public void sql_UpdateTimesCallback(Handle owner, Handle hndl, const char[] error, any data)
 {
-	if (hndl == null)
+    if (hndl == null)
 	{
 		LogError("[Map Challenge] SQL Error (sql_UpdateTimesCallback): %s", error);
 		return;
-	}
-
-	if (SQL_HasResultSet(hndl) && SQL_FetchRow(hndl))
-		PrintToServer("[Map Challenge] SQL Operation Successfull");
-	else
-        PrintToServer("[Map Challenge] SQL Error (sql_UpdateTimesCallback): %s", error);
-
+    }
+    else{
+	    PrintToServer("[Map Challenge] SQL Operation Successfull");
+    }
 }
 
 //SHOW CHALLENGE LEADERBOARD
