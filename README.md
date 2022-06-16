@@ -40,6 +40,6 @@ An admin can end the current challenge via cmd, which will also distribute the p
 The point distribution is done automatically either when an admin uses the ```sm_end_challenge``` cmd OR when the duration of the challenge has reached the final date
 
 ## Future Ideas
-* Discord Integration
+* Discord Integration (working on it)
 * Multiple Challenges
 * Better point distribuition ?
