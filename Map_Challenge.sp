@@ -468,7 +468,7 @@ public void sql_SelectChallengeTopCallback(Handle owner, Handle hndl, const char
     if (SQL_HasResultSet(hndl)){
 
         Menu menu = new Menu(Menu_ChallengeTopHandler);
-        menu.SetTitle("Map Challenge TOP for %s \n    Rank    Time               Player\n", g_sChallenge_MapName);
+        menu.SetTitle("Map Challenge TOP for %s \n    Rank   Time           Difference         Player\n", g_sChallenge_MapName);
 
         char szItem[64];
         int rank=1;
@@ -488,22 +488,25 @@ public void sql_SelectChallengeTopCallback(Handle owner, Handle hndl, const char
 
             float player_runtime = SQL_FetchFloat(hndl, 1);
             char szFormattedRuntime[64];
+            char szFormattedDifference[64];
             FormatTimeFloat(client, player_runtime, 3, szFormattedRuntime, sizeof(szFormattedRuntime));
 
         
             if(rank == 1){
-                Format(szItem, sizeof(szItem), "[0%i]    | (%s) %s|   %s", rank, szFormattedRuntime, "ㅤ",szPlayerName);
+                Format(szItem, sizeof(szItem), "[0%i]   | %s | (+00:00:00) | %s", rank, szFormattedRuntime, szPlayerName);
                 rank_1_time = player_runtime;
             }
             else{
-                szFormattedRuntime = "";
+                FormatTimeFloat(client, player_runtime, 3, szFormattedRuntime, sizeof(szFormattedRuntime));
+
                 runtime_difference = rank_1_time - player_runtime;
-                FormatTimeFloat(client, runtime_difference, 3, szFormattedRuntime, sizeof(szFormattedRuntime));
+                FormatTimeFloat(client, runtime_difference, 3, szFormattedDifference, sizeof(szFormattedDifference));
+                
 
                 if (rank >= 10)
-                    Format(szItem, sizeof(szItem), "[%i]    | (+%s) |   %s", rank, szFormattedRuntime, szPlayerName);
+                    Format(szItem, sizeof(szItem), "[%i]     | %s | (+%s) | %s", rank, szFormattedRuntime, szFormattedDifference, szPlayerName);
                 else
-                    Format(szItem, sizeof(szItem), "[0%i]    | (+%s) |   %s", rank, szFormattedRuntime, szPlayerName);
+                    Format(szItem, sizeof(szItem), "[0%i]   | %s | (+%s) | %s", rank, szFormattedRuntime, szFormattedDifference, szPlayerName);
             }
 
             AddMenuItem(menu, "", szItem);
@@ -511,6 +514,7 @@ public void sql_SelectChallengeTopCallback(Handle owner, Handle hndl, const char
             rank++;
         }
         
+        SetMenuPagination(menu, 5);
         SetMenuExitButton(menu, true);
         DisplayMenu(menu, client, MENU_TIME_FOREVER);
         
