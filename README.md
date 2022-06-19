@@ -35,8 +35,8 @@ You can customize the map, style, duration of the callenge and points received.
 ![image](https://user-images.githubusercontent.com/70631212/174004447-840e1c62-3551-4584-8843-80d618d7f24c.png)
 
 ## More Details
-To create a new challenge ```sm_add_challenge <mapname> <style> <top1_points> <duration (in days)>```
-The plugin only allows 1 challenge occuring at the same time (for now idk)
+To create a new challenge ```sm_add_challenge <mapname> <style> <top1_points> <duration (in days)>```.
+The plugin only allows 1 challenge occuring at the same time (for now idk).
 An admin can end the current challenge via cmd, which will also distribute the points accordingly.
 The point distribution is done automatically either when an admin uses the ```sm_end_challenge``` cmd OR when the duration of the challenge has reached the final date
 
