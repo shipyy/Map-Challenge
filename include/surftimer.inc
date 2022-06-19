@@ -118,6 +118,17 @@ native int surftimer_GetMapData(char[] name, char[] time);
 native void surftimer_GetPlayerData(int& client, char[] time, int& rank, char[] country);
 
 /**
+ * Retrieves the client's current info.
+ *
+ * @param client			The client's ID.
+ * @param iWrcpTimer		Int to store the client's WRCP timer.
+ * @param iPracMode			Int to store the client's Practice mode.
+ * @param iStage			Int to store the client's current stage.
+ * @param iBonus			Int to store the client's current bonus.
+ */
+native void surftimer_GetPlayerInfo(int& client, int& iWrcpTimer, int& iPracMode, int& iStage, int& iBonus);
+
+/**
  * Teleport a client safely, without triggering end touches
  * and sets the client's location correctly.
  *
@@ -146,7 +157,7 @@ forward Action surftimer_OnMapFinished(int client, float fRunTime, char sRunTime
  * @param client			The client's ID.
  * @return						Plugin_Handled, to stop the client from searching.
  */
-forward Action surftimer_OnCheckpoint(int client, float fRunTime, char sRunTime[54], float fPbCp, char sPbDiff[16], float fSrCp, char sSrDiff[16], float fspeed, char sspeed[128], float fPbCpSpeed, char sCpSpeedDiff[128], float fSRCPSpeed, char sSRCpSpeedDiff[128]);
+forward Action surftimer_OnCheckpoint(int client, float fRunTime, char sRunTime[54], float fPbCp, char sPbDiff[16], char fSrCp, char sSrDiff[16]);
 
 
 /**
