@@ -35,6 +35,18 @@ char g_sChallenge_MapName[32];
 
 char g_szMapName[128];
 
+char g_szStyleMenuPrint[][] =
+{
+	"Normal",
+	"Sideways",
+	"Half-Sideways",
+	"Backwards",
+	"Low-Gravity",
+	"Slow Motion",
+	"Fast Forward",
+	"Freestyle"
+};
+
 // Client's steamID
 char g_szSteamID[MAXPLAYERS + 1][32];
 
@@ -46,10 +58,10 @@ GlobalForward g_NewChallengeForward;
 #include <surftimer>
 #include <colorlib>
 #include <map-challenge>
-#include "queries.sp"
-#include "sql.sp"
-#include "misc.sp"
-#include "api.sp"
+#include "scripting/mc-queries.sp"
+#include "scripting/mc-sql.sp"
+#include "scripting/mc-misc.sp"
+#include "scripting/mc-api.sp"
 
 stock bool IsValidClient(int client)
 {   
@@ -170,7 +182,6 @@ public Action Create_Challenge(int client, int args)
         char szstyle[32];
         GetCmdArg(2, szstyle, sizeof(szstyle));
         int style = StringToInt(szstyle);
-        style = 0;
 
         char szpoints[32];
         GetCmdArg(3, szpoints, sizeof(szpoints));
@@ -185,7 +196,7 @@ public Action Create_Challenge(int client, int args)
         else
             CPrintToChat(client, "%t", "Challenge_Active", g_szChatPrefix);
     }
-    
+
     return Plugin_Handled;
 }
 
@@ -325,18 +336,15 @@ public void sql_EndCurrentChallengeCallback(Handle owner, Handle hndl, const cha
     }
 }
 
-public Action surftimer_OnMapFinished(int client, float fRunTime, char sRunTime[54], int rank, int total)
+public Action surftimer_OnMapFinished(int client, float fRunTime, char sRunTime[54], int rank, int total, int style)
 {
-    
-    if(g_bIsCurrentMapChallenge && g_bIsChallengeActive)
-        db_TimesExistsCheck(client, fRunTime);
-    else
-        PrintToChatAll("NOT CHALLENGE MAP");
+    if(g_bIsCurrentMapChallenge && g_bIsChallengeActive && (g_iChallenge_Style == style))
+        db_TimesExistsCheck(client, fRunTime, style);
 
     return Plugin_Handled;
 }
 
-public void db_TimesExistsCheck(int client, float runtime)
+public void db_TimesExistsCheck(int client, float runtime, int style)
 {
     if (!IsValidClient(client))
 		return;
@@ -344,6 +352,7 @@ public void db_TimesExistsCheck(int client, float runtime)
     Handle pack = CreateDataPack();
     WritePackCell(pack, client);
     WritePackFloat(pack, runtime);
+    WritePackCell(pack, style);
 
 	//FORMAT UNIX TIMESTAMPS TO THE FORMAT USED IN THE DATABASE
     char szInitial_TimeStamp[32];
@@ -352,7 +361,7 @@ public void db_TimesExistsCheck(int client, float runtime)
     FormatTime(szFinal_TimeStamp, sizeof(szFinal_TimeStamp), "%F %X", g_iChallenge_Final_TimeStamp);
     
     char szQuery[255];
-    Format(szQuery, sizeof(szQuery), "SELECT runtime FROM ck_challenge_times WHERE steamid = '%s' AND mapname = '%s' AND runtime > -1.0 AND style = 0 AND Run_Date BETWEEN '%s' AND '%s';", g_szSteamID[client], g_szMapName, szInitial_TimeStamp, szFinal_TimeStamp);
+    Format(szQuery, sizeof(szQuery), "SELECT runtime FROM ck_challenge_times WHERE steamid = '%s' AND mapname = '%s' AND runtime > -1.0 AND style = %i AND Run_Date BETWEEN '%s' AND '%s';", g_szSteamID[client], g_szMapName, style, szInitial_TimeStamp, szFinal_TimeStamp);
     PrintToServer(szQuery);
     SQL_TQuery(g_hDb, sql_TimesExistsCheckCallback, szQuery, pack, DBPrio_Low);
 }
@@ -369,14 +378,15 @@ public void sql_TimesExistsCheckCallback(Handle owner, Handle hndl, const char[]
 	ResetPack(pack);
 	int client = ReadPackCell(pack);
 	float runtime = ReadPackFloat(pack);
+	int style = ReadPackCell(pack);
     
     // Found old time from database
 	if (SQL_HasResultSet(hndl) && SQL_FetchRow(hndl)){
         if(SQL_FetchFloat(hndl, 0) >= runtime)
-            db_UpdateTime(client, runtime, 0);
+            db_UpdateTime(client, runtime, style);
     }
 	else{
-        db_InsertTime(client, runtime, 0);
+        db_InsertTime(client, runtime, style);
     }
 }
 
@@ -392,7 +402,7 @@ public void db_UpdateTime(int client, float runtime, int style)
 	FormatTime(szFinal_TimeStamp, sizeof(szFinal_TimeStamp), "%F %X", g_iChallenge_Final_TimeStamp);
 
 	char szQuery[255];
-	Format(szQuery, sizeof(szQuery), "UPDATE ck_challenge_times SET runtime = '%f' WHERE steamid = '%s' AND mapname = '%s' AND runtime > -1.0 AND style = 0 AND Run_Date BETWEEN '%s' AND '%s';", runtime, g_szSteamID[client], g_szMapName, szInitial_TimeStamp, szFinal_TimeStamp);
+	Format(szQuery, sizeof(szQuery), "UPDATE ck_challenge_times SET runtime = '%f' WHERE steamid = '%s' AND mapname = '%s' AND runtime > -1.0 AND style = %i AND Run_Date BETWEEN '%s' AND '%s';", runtime, g_szSteamID[client], g_szMapName, style, szInitial_TimeStamp, szFinal_TimeStamp);
 	SQL_TQuery(g_hDb, sql_UpdateTimesCallback, szQuery, DBPrio_Low);
 }
 
@@ -447,7 +457,7 @@ public void db_SelectChallengeTop(int client){
 
     if(g_bIsChallengeActive){
         char szQuery[255];
-        Format(szQuery, sizeof(szQuery), "SELECT name, runtime FROM ck_challenge_times WHERE id = '%i' ORDER BY runtime ASC LIMIT 50;", g_iChallenge_ID);
+        Format(szQuery, sizeof(szQuery), "SELECT name, runtime, style FROM ck_challenge_times WHERE id = '%i' ORDER BY runtime ASC LIMIT 50;", g_iChallenge_ID);
         PrintToServer(szQuery);
         SQL_TQuery(g_hDb, sql_SelectChallengeTopCallback, szQuery, client, DBPrio_Low);
     }
@@ -467,8 +477,10 @@ public void sql_SelectChallengeTopCallback(Handle owner, Handle hndl, const char
     
     if (SQL_HasResultSet(hndl)){
 
+        int style = SQL_FetchInt(hndl, 2);
+
         Menu menu = new Menu(Menu_ChallengeTopHandler);
-        menu.SetTitle("Map Challenge TOP for %s \n    Rank   Time           Difference         Player\n", g_sChallenge_MapName);
+        menu.SetTitle("Map Challenge TOP for %s | %s \n    Rank   Time           Difference         Player\n", g_sChallenge_MapName, g_szStyleMenuPrint[style]);
 
         char szItem[64];
         int rank=1;
@@ -490,6 +502,10 @@ public void sql_SelectChallengeTopCallback(Handle owner, Handle hndl, const char
             char szFormattedRuntime[64];
             char szFormattedDifference[64];
             FormatTimeFloat(client, player_runtime, 3, szFormattedRuntime, sizeof(szFormattedRuntime));
+
+            switch(style){
+                case 0: Format(szItem, sizeof(szItem), "[0%i]   | %s | (+00:00:00) | %s", rank, szFormattedRuntime, szPlayerName);
+            }
 
         
             if(rank == 1){
@@ -588,7 +604,7 @@ public Action Check_Challenge_End(Handle timer)
     Format(szQuery, sizeof(szQuery), "SELECT TIMESTAMPDIFF(SECOND,CURRENT_TIMESTAMP, EndDate) as Time_Diff FROM ck_challenges WHERE id = '%i';", g_iChallenge_ID);
     SQL_TQuery(g_hDb, sql_Check_Challenge_EndCallback, szQuery, DBPrio_Low);
 
-    return Plugin_Handled;
+    return Plugin_Continue;
 
 }
 
@@ -675,7 +691,7 @@ public Action Challenge_Info(int client, int args)
 
     char szQuery[1024];
     PrintToServer(szQuery);
-    Format(szQuery, sizeof(szQuery), "SELECT *, TIMESTAMPDIFF(SECOND,CURRENT_TIMESTAMP, EndDate) as Time_Diff FROM ck_challenges WHERE active = 1;");
+    Format(szQuery, sizeof(szQuery), "SELECT id, mapname, StartDate, EndDate, points, style, TIMESTAMPDIFF(SECOND,CURRENT_TIMESTAMP, EndDate) as Time_Diff FROM ck_challenges WHERE active = 1;");
     SQL_TQuery(g_hDb, SQL_Challenge_InfoCallback, szQuery, client, DBPrio_Low); 
 
     return Plugin_Handled;
@@ -708,15 +724,20 @@ public void SQL_Challenge_InfoCallback(Handle owner, Handle hndl, const char[] e
         char End_Date[32];
         SQL_FetchString(hndl, 3, End_Date, sizeof(End_Date));
 
-        int points = SQL_FetchInt(hndl, 5);
+        int points = SQL_FetchInt(hndl, 4);
 
-        float timeleft = SQL_FetchInt(hndl, 7) * 1.0;
+        int style = SQL_FetchInt(hndl, 5);
+
+        float timeleft = SQL_FetchInt(hndl, 6) * 1.0;
 
         //FORMAT VARIABLES
         Format(szItem, sizeof(szItem), "Challenge # %d", id);
         AddMenuItem(Challenge_Info_Menu, "", szItem, ITEMDRAW_DISABLED);
 
         Format(szItem, sizeof(szItem), "Map : %s", szMapName);
+        AddMenuItem(Challenge_Info_Menu, "", szItem, ITEMDRAW_DISABLED);
+
+        Format(szItem, sizeof(szItem), "Style : %s", g_szStyleMenuPrint[style]);
         AddMenuItem(Challenge_Info_Menu, "", szItem, ITEMDRAW_DISABLED);
 
         Format(szItem, sizeof(szItem), "Started : %s", Start_Date);
