@@ -56,6 +56,7 @@ public void db_createTables()
 
 	SQL_AddQuery(createTableTnx, sql_CreateChallenges);
 	SQL_AddQuery(createTableTnx, sql_CreateChallenges_Times);
+	SQL_AddQuery(createTableTnx, sql_CreateChallenges_Players);
 
 	SQL_ExecuteTransaction(g_hDb, createTableTnx, SQLTxn_CreateDatabaseSuccess, SQLTxn_CreateDatabaseFailed);
 

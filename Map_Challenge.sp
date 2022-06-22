@@ -339,10 +339,94 @@ public void sql_EndCurrentChallengeCallback(Handle owner, Handle hndl, const cha
 public Action surftimer_OnMapFinished(int client, float fRunTime, char sRunTime[54], int rank, int total, int style)
 {
     if(g_bIsCurrentMapChallenge && g_bIsChallengeActive && (g_iChallenge_Style == style))
-        db_TimesExistsCheck(client, fRunTime, style);
+        db_PlayerExistsCheck(client, fRunTime, style);
 
     return Plugin_Handled;
 }
+
+public void db_PlayerExistsCheck(int client, float runtime, int style)
+{
+    if (!IsValidClient(client))
+		return;
+    
+    Handle pack = CreateDataPack();
+    WritePackCell(pack, client);
+    WritePackFloat(pack, runtime);
+    WritePackCell(pack, style);
+    
+    char szQuery[255];
+    Format(szQuery, sizeof(szQuery), "SELECT * FROM ck_challenge_players WHERE steamid = '%s' AND style = '%i';", g_szSteamID[client], style);
+    PrintToServer(szQuery);
+    SQL_TQuery(g_hDb, sql_PlayerExistsCheckCallback, szQuery, pack, DBPrio_Low);
+}
+
+public void sql_PlayerExistsCheckCallback(Handle owner, Handle hndl, const char[] error, any pack)
+{
+	if (hndl == null)
+	{
+		LogError("[Map Challenge] SQL Error (sql_PlayerExistsCheckCallback): %s", error);
+		CloseHandle(pack);
+		return;
+	}
+
+	ResetPack(pack);
+	int client = ReadPackCell(pack);
+	float runtime = ReadPackFloat(pack);
+	int style = ReadPackCell(pack);
+    
+    // Found old time from database
+	if (SQL_HasResultSet(hndl) && SQL_FetchRow(hndl))
+        db_TimesExistsCheck(client, runtime, style);
+	else
+        db_InsertPlayer(client, runtime, style);
+}
+
+public void db_InsertPlayer(int client, float runtime, int style)
+{
+    Handle pack = CreateDataPack();
+    WritePackCell(pack, client);
+    WritePackFloat(pack, runtime);
+    WritePackCell(pack, style);
+    
+    char szUName[MAX_NAME_LENGTH];
+
+    if (IsValidClient(client))
+		GetClientName(client, szUName, MAX_NAME_LENGTH);
+	else
+		return;
+
+    //ESCPA NAME STRING
+    char szName[MAX_NAME_LENGTH * 2 + 1];
+    SQL_EscapeString(g_hDb, szUName, szName, MAX_NAME_LENGTH * 2 + 1);
+    
+    //FORMAT UNIX TIMESTAMPS TO THE FORMAT USED IN THE DATABASE
+    char szInitial_TimeStamp[32];
+    char szFinal_TimeStamp[32];
+    FormatTime(szInitial_TimeStamp, sizeof(szInitial_TimeStamp), "%F %X", g_iChallenge_Initial_TimeStamp);
+    FormatTime(szFinal_TimeStamp, sizeof(szFinal_TimeStamp), "%F %X", g_iChallenge_Final_TimeStamp);
+    
+    char szQuery[255];
+    Format(szQuery, sizeof(szQuery), "INSERT INTO ck_challenge_players (steamid, name, style, points) VALUES ('%s', '%s', '%i', '%i');", g_szSteamID[client], szName, style, 0);
+    SQL_TQuery(g_hDb, sql_InsertPlayerCallback, szQuery, pack, DBPrio_Low);
+}
+
+public void sql_InsertPlayerCallback(Handle owner, Handle hndl, const char[] error, any data)
+{
+    if (hndl == null)
+	{
+        LogError("[Map Challenge] SQL Error (sql_InsertPlayerCallback): %s", error);
+        CloseHandle(data);
+        return;
+    }
+    
+    ResetPack(data);
+    int client = ReadPackCell(data);
+    float runtime = ReadPackFloat(data);
+    int style = ReadPackCell(data);
+    
+    db_PlayerExistsCheck(client, runtime, style);
+}
+
 
 public void db_TimesExistsCheck(int client, float runtime, int style)
 {
@@ -636,7 +720,7 @@ public void sql_Check_Challenge_EndCallback(Handle owner, Handle hndl, const cha
 public void db_DistributePoints(){
 
     char szQuery[1024];
-    Format(szQuery, sizeof(szQuery), "SELECT steamid, style FROM ck_challenge_times WHERE id = '%i' ORDER BY runtime ASC;", g_iChallenge_ID);
+    Format(szQuery, sizeof(szQuery), "SELECT steamid, style FROM ck_challenge_times WHERE id = '%i' AND active = '1' ORDER BY runtime ASC;", g_iChallenge_ID);
     SQL_TQuery(g_hDb, sql_DistributePointsCallback, szQuery, DBPrio_Low);
 
 }
@@ -680,7 +764,7 @@ public void AddChallengePoints(char szSteamID[32], int style, int points_to_add)
 {
     char szQuery[1024];
     PrintToServer(szQuery);
-    Format(szQuery, sizeof(szQuery), "UPDATE ck_playerrank SET challenge_points = challenge_points + %i WHERE steamid = '%s' AND style = %i;", points_to_add, szSteamID, style);
+    Format(szQuery, sizeof(szQuery), "UPDATE ck_challenge_players SET points = points + %i WHERE steamid = '%s' AND style = %i;", points_to_add, szSteamID, style);
     SQL_TQuery(g_hDb, SQL_CheckCallback, szQuery, DBPrio_Low); 
 }
 
