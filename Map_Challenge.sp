@@ -47,6 +47,18 @@ char g_szStyleMenuPrint[][] =
 	"Freestyle"
 };
 
+char g_szStyleAcronyms[][] =
+{
+	"n",
+	"sw",
+	"hsw",
+	"bw",
+	"lg",
+	"sm",
+	"ff",
+	"fs"
+};
+
 // Client's steamID
 char g_szSteamID[MAXPLAYERS + 1][32];
 
@@ -62,6 +74,9 @@ GlobalForward g_NewChallengeForward;
 #include "scripting/mc-sql.sp"
 #include "scripting/mc-misc.sp"
 #include "scripting/mc-api.sp"
+
+#define PERCENT 0x25
+#define MAX_STYLES 8
 
 stock bool IsValidClient(int client)
 {   
@@ -92,8 +107,10 @@ public void OnMapStart(){
 
     //COMMANDS
     RegConsoleCmd("sm_challenge", Challenge_Info, "[Map Challenge] Displays additional information of the ongoing challenge");
-    RegConsoleCmd("sm_ct", LeaderBoard, "[Map Challenge] Displays the ongoing challenge leaderboard (TOP 50)");
-    RegConsoleCmd("sm_ctl", Challenge_Timeleft, "[Map Challenge] Displays remaining time left of the current challenge");
+    RegConsoleCmd("sm_mcp", ChallengeProfile, "[Map Challenge] Displays the players profile");
+    RegConsoleCmd("sm_mctop", TopLeaderBoard, "[Map Challenge] Displays the top players on the challenge leaderboard (TOP 50)");
+    RegConsoleCmd("sm_mcct", LeaderBoard, "[Map Challenge] Displays the ongoing challenge leaderboard (TOP 50)");
+    RegConsoleCmd("sm_mct", Challenge_Timeleft, "[Map Challenge] Displays remaining time left of the current challenge");
     RegAdminCmd("sm_add_challenge", Create_Challenge, ADMFLAG_ROOT, "[Map Challenge] Add new challenge");
     RegAdminCmd("sm_end_challenge", Manual_ChallengeEnd, ADMFLAG_ROOT, "[Map Challenge] Ends the ongoing challenge");
 
@@ -108,16 +125,14 @@ public void OnClientPutInServer(int client)
 {   
     if (!IsValidClient(client))
 		return;
-        
+
     GetClientAuthId(client, AuthId_Steam2, g_szSteamID[client], MAX_NAME_LENGTH, true);
 }
 
 public void db_CheckChallengeActive()
 {
     char szQuery[255];
-    PrintToServer(szQuery);
     Format(szQuery, sizeof(szQuery), "SELECT id, active, mapname, points, UNIX_TIMESTAMP(StartDate), UNIX_TIMESTAMP(EndDate), TIMESTAMPDIFF(SECOND,CURRENT_TIMESTAMP, EndDate) as Time_Diff FROM ck_challenges ORDER BY id DESC LIMIT 1;");
-    PrintToServer(szQuery);
     SQL_TQuery(g_hDb, sql_CheckChallengeActiveCallback, szQuery, DBPrio_Low);
 }
 
@@ -149,7 +164,8 @@ public void sql_CheckChallengeActiveCallback(Handle owner, Handle hndl, const ch
             else{
                 g_bIsChallengeActive = true;
                 SQL_FetchString(hndl, 2, g_sChallenge_MapName, sizeof(g_sChallenge_MapName));
-                if(strcmp(g_szMapName, g_sChallenge_MapName))
+
+                if(StrEqual(g_szMapName, g_sChallenge_MapName, false))
                     g_bIsCurrentMapChallenge = true;
 
                 //Timer that check regularly if the time remaining of current challenge has run out
@@ -161,7 +177,6 @@ public void sql_CheckChallengeActiveCallback(Handle owner, Handle hndl, const ch
             g_iChallenge_ID = SQL_FetchInt(hndl, 0);
             SQL_FetchString(hndl, 2, g_sChallenge_MapName, sizeof(g_sChallenge_MapName));
         }
-        PrintToServer("\n\n\n---CHECKED CHALLENGE---\n\n\n");
     }
 }
 
@@ -244,11 +259,12 @@ public void sql_selectMapNameEqualsCallback(Handle owner, Handle hndl, const cha
 
 public void db_AddChallenge(int client, char szMapName[32], int style, int points, int duration)
 {
-    PrintToServer("\n\n\nADDING\n\n\n");
-
     g_sChallenge_MapName = szMapName;
     g_iChallenge_Points = points;
     g_iChallenge_Style = style;
+
+    if(StrEqual(szMapName, g_szMapName, false))
+        g_bIsCurrentMapChallenge = true;
 
     char szInitial_TimeStamp[32];
     //char szFinal_TimeStamp[32];
@@ -356,7 +372,6 @@ public void db_PlayerExistsCheck(int client, float runtime, int style)
     
     char szQuery[255];
     Format(szQuery, sizeof(szQuery), "SELECT * FROM ck_challenge_players WHERE steamid = '%s' AND style = '%i';", g_szSteamID[client], style);
-    PrintToServer(szQuery);
     SQL_TQuery(g_hDb, sql_PlayerExistsCheckCallback, szQuery, pack, DBPrio_Low);
 }
 
@@ -406,25 +421,27 @@ public void db_InsertPlayer(int client, float runtime, int style)
     FormatTime(szFinal_TimeStamp, sizeof(szFinal_TimeStamp), "%F %X", g_iChallenge_Final_TimeStamp);
     
     char szQuery[255];
-    Format(szQuery, sizeof(szQuery), "INSERT INTO ck_challenge_players (steamid, name, style, points) VALUES ('%s', '%s', '%i', '%i');", g_szSteamID[client], szName, style, 0);
-    SQL_TQuery(g_hDb, sql_InsertPlayerCallback, szQuery, pack, DBPrio_Low);
+    for(int i = 0; i < MAX_STYLES; i++){
+        Format(szQuery, sizeof(szQuery), "INSERT INTO ck_challenge_players (steamid, name, style, points) VALUES ('%s', '%s', '%i', '%i');", g_szSteamID[client], szName, i, 0);
+        SQL_TQuery(g_hDb, sql_InsertPlayerCallback, szQuery, pack, DBPrio_Low);
+    }
 }
 
-public void sql_InsertPlayerCallback(Handle owner, Handle hndl, const char[] error, any data)
+public void sql_InsertPlayerCallback(Handle owner, Handle hndl, const char[] error, any pack)
 {
     if (hndl == null)
 	{
         LogError("[Map Challenge] SQL Error (sql_InsertPlayerCallback): %s", error);
-        CloseHandle(data);
+        CloseHandle(pack);
         return;
     }
     
-    ResetPack(data);
-    int client = ReadPackCell(data);
-    float runtime = ReadPackFloat(data);
-    int style = ReadPackCell(data);
+    ResetPack(pack);
+    int client = ReadPackCell(pack);
+    float runtime = ReadPackFloat(pack);
+    int style = ReadPackCell(pack);
     
-    db_PlayerExistsCheck(client, runtime, style);
+    db_TimesExistsCheck(client, runtime, style);
 }
 
 
@@ -446,7 +463,6 @@ public void db_TimesExistsCheck(int client, float runtime, int style)
     
     char szQuery[255];
     Format(szQuery, sizeof(szQuery), "SELECT runtime FROM ck_challenge_times WHERE steamid = '%s' AND mapname = '%s' AND runtime > -1.0 AND style = %i AND Run_Date BETWEEN '%s' AND '%s';", g_szSteamID[client], g_szMapName, style, szInitial_TimeStamp, szFinal_TimeStamp);
-    PrintToServer(szQuery);
     SQL_TQuery(g_hDb, sql_TimesExistsCheckCallback, szQuery, pack, DBPrio_Low);
 }
 
@@ -511,7 +527,7 @@ public void db_InsertTime(int client, float runtime, int style)
 
 	char szQuery[255];
 	Format(szQuery, sizeof(szQuery), "INSERT INTO ck_challenge_times (id, steamid, name, mapname, runtime, style) VALUES ('%i', '%s', '%s', '%s', '%f', '%i');", g_iChallenge_ID, g_szSteamID[client], szName, g_szMapName, runtime, style);
-	SQL_TQuery(g_hDb, sql_UpdateTimesCallback, szQuery, DBPrio_Low);
+	SQL_TQuery(g_hDb, sql_UpdateTimesCallback, szQuery, client, DBPrio_Low);
 }
 
 public void sql_UpdateTimesCallback(Handle owner, Handle hndl, const char[] error, any data)
@@ -522,8 +538,284 @@ public void sql_UpdateTimesCallback(Handle owner, Handle hndl, const char[] erro
 		return;
     }
     else{
-	    PrintToServer("[Map Challenge] SQL Operation Successfull");
+        CPrintToChat(data, "%t", "Challenge_NewTime", g_szChatPrefix);
     }
+}
+
+//SHOW PLAYERS PROFILE
+//CODE BASE RETRIVED FROM https://github.com/surftimer/SurfTimer
+public Action ChallengeProfile(int client, int args)
+{
+    char szSteamID[32];
+    Format(szSteamID, sizeof(szSteamID), "");
+    
+    if(args > 0)
+        GetCmdArg(0, szSteamID, sizeof(szSteamID));
+
+    ProfileMenu(client, szSteamID);
+
+    return Plugin_Handled;
+
+}
+
+public void ProfileMenu(int client, char szSteamID[32])
+{
+	if(StrEqual(szSteamID, ""))
+	{
+		char szPlayerName[MAX_NAME_LENGTH];
+		Menu menu = CreateMenu(ProfilePlayerSelectMenuHandler);
+		SetMenuTitle(menu, "Challenge Profile Menu - Choose a player\n------------------------------\n");
+		GetClientName(client, szPlayerName, sizeof(szPlayerName));
+		AddMenuItem(menu, szPlayerName, szPlayerName);
+		for (int i = 1; i <= MaxClients; i++)
+		{
+			if (IsValidClient(i) && !IsFakeClient(i) && i != client)
+			{
+				GetClientName(i, szPlayerName, sizeof(szPlayerName));
+				AddMenuItem(menu, szPlayerName, szPlayerName);
+			}
+		}
+		SetMenuExitButton(menu, true);
+		DisplayMenu(menu, client, MENU_TIME_FOREVER);
+	}
+	else
+	{
+        db_viewPlayerProfile(client, szSteamID);
+	}
+}
+
+public int ProfilePlayerSelectMenuHandler(Handle menu, MenuAction action, int param1, int param2)
+{
+	if (action == MenuAction_Select)
+	{
+		char szPlayerName[MAX_NAME_LENGTH];
+		char szBuffer[MAX_NAME_LENGTH];
+		char szSteamId[32];
+		GetMenuItem(menu, param2, szPlayerName, sizeof(szPlayerName));
+		for (int i = 0; i < MaxClients; i++)
+		{
+			if (IsValidClient(i) && !IsFakeClient(i))
+			{
+				GetClientName(i, szBuffer, sizeof(szBuffer));
+				if (StrEqual(szPlayerName, szBuffer))
+				{
+					GetClientAuthId(i, AuthId_Steam2, szSteamId, 32, true);
+					db_viewPlayerProfile(param1, szSteamId);
+					break;	
+				}
+			}
+		}
+	}
+	else if (action == MenuAction_End)
+		delete menu;
+
+	return 0;
+}
+
+public void db_viewPlayerProfile(int client, char szSteamID[32])
+{
+    char szQuery[1024];
+    Format(szQuery, sizeof(szQuery), "SELECT * FROM ck_challenge_players WHERE steamid = '%s' ORDER BY style ASC;", szSteamID);
+    SQL_TQuery(g_hDb, sql_viewPlayerProfileCallback, szQuery, client, DBPrio_Low);
+}
+
+public void sql_viewPlayerProfileCallback(Handle owner, Handle hndl, const char[] error, any client)
+{
+    if (hndl == null)
+    {
+        LogError("[Map Challenge] SQL Error (sql_viewPlayerProfileCallback): %s", error);
+        return;
+    }
+
+    if (SQL_HasResultSet(hndl)){
+
+        Menu menu = new Menu(Menu_ProfileHandler);
+
+        char szItem[64];
+        char szName[MAX_NAME_LENGTH];
+        char szSteamID[32];
+        int style;
+        int points;
+        int total_points = 0;
+
+        while(SQL_FetchRow(hndl)){
+
+            SQL_FetchString(hndl, 0, szSteamID, sizeof(szSteamID));
+            SQL_FetchString(hndl, 1, szName, sizeof(szName));
+            style = SQL_FetchInt(hndl, 2);
+            points = SQL_FetchInt(hndl, 3);
+            
+            total_points = total_points + points;
+
+            Format(szItem, sizeof(szItem), "%s - %i pts", g_szStyleMenuPrint[style], points);
+
+            AddMenuItem(menu, "", szItem, ITEMDRAW_DISABLED);
+
+            if(style == 7)
+                AddMenuItem(menu, "", "", ITEMDRAW_SPACER);
+
+        }
+
+        Format(szItem, sizeof(szItem), "Total Points - %i pts", total_points);
+        AddMenuItem(menu, "", szItem, ITEMDRAW_DISABLED);
+
+        menu.SetTitle("Challenge's Profile for %s\n%s\n", szName, szSteamID);
+
+        SetMenuExitButton(menu, true);
+        DisplayMenu(menu, client, MENU_TIME_FOREVER);
+        
+    }
+
+}
+
+public int Menu_ProfileHandler(Handle menu, MenuAction action, int param1, int param2)
+{
+	if (action == MenuAction_End)
+		delete menu;
+
+	return 0;
+}
+
+
+//SHOW OVERALL CHALLENGES LEADERBOARD (TOP 50)
+//CODE BASE RETRIVED FROM https://github.com/surftimer/SurfTimer
+public Action TopLeaderBoard(int client, int args)
+{   
+    if(!IsValidClient(client))
+        return Plugin_Handled;
+    
+    Menu menu = CreateMenu(TOPStyleSelectHandler);
+    SetMenuTitle(menu, "Profile Menu - Select a style");
+    AddMenuItem(menu, "0", "Normal");
+    AddMenuItem(menu, "1", "Sideways");
+    AddMenuItem(menu, "2", "Half-Sideways");
+    AddMenuItem(menu, "3", "Backwards");
+    AddMenuItem(menu, "4", "Low-Gravity");
+    AddMenuItem(menu, "5", "Slow Motion");
+    AddMenuItem(menu, "6", "Fast Forwards");
+    AddMenuItem(menu, "7", "Freestyle");
+    SetMenuExitButton(menu, true);
+    DisplayMenu(menu, client, MENU_TIME_FOREVER);
+
+    return Plugin_Handled;
+}
+
+public int TOPStyleSelectHandler(Handle menu, MenuAction action, int param1, int param2)
+{
+	if (action == MenuAction_Select)
+	{
+        char szStyle[32];
+        GetMenuItem(menu, param2, szStyle, sizeof(szStyle));
+        
+        db_DisplayOverallTOP(param1, StringToInt(szStyle));
+	}
+	else if (action == MenuAction_End)
+		delete menu;
+
+	return 0;
+}
+
+public void db_DisplayOverallTOP(int client, int style)
+{
+    Handle pack = CreateDataPack();
+    WritePackCell(pack, client);
+    WritePackCell(pack, style);
+
+    char szQuery[1024];
+    Format(szQuery, sizeof(szQuery), "SELECT steamid, name, points FROM ck_challenge_players WHERE style = '%i' ORDER BY points DESC LIMIT 50;", style);
+    SQL_TQuery(g_hDb, sql_DisplayOverallTOPCallback, szQuery, pack, DBPrio_Low);
+
+}
+
+public void sql_DisplayOverallTOPCallback(Handle owner, Handle hndl, const char[] error, any pack)
+{
+    if (hndl == null)
+    {
+        LogError("[Map Challenge] SQL Error (sql_DisplayOverallTOPCallback): %s", error);
+        CloseHandle(pack);
+        return;
+    }
+    
+    ResetPack(pack);
+    int client = ReadPackCell(pack);
+    int style = ReadPackCell(pack);
+
+    if (SQL_HasResultSet(hndl)){
+
+        Menu menu = new Menu(Menu_OverallChallengeTopHandler);
+        menu.SetTitle("Challenges TOP for %s\n    Rank      Points          Player\n", g_szStyleMenuPrint[style]);
+
+        char szItem[64];
+        int rank = 1;
+        char szRank[16];
+
+        while(SQL_FetchRow(hndl)){
+            
+            char szSteamID[32];
+            SQL_FetchString(hndl, 0, szSteamID, 32);
+
+            char szPlayerName[32];
+            SQL_FetchString(hndl, 1, szPlayerName, sizeof(szPlayerName));
+
+            int points = SQL_FetchInt(hndl, 2);
+
+            //when uysing select it always return TRUE using SQL_HasResultSet() so I just compare the value of a column to an empty string for the first row returned
+            if(strcmp(szPlayerName, "") == 0){
+                CPrintToChat(client, "%t", "Overall_Challenge_LeaderBoard_Empty", g_szChatPrefix, g_szStyleMenuPrint[style]);
+                return;
+            }
+            
+            //if (rank >= 10)
+            //    Format(szItem, sizeof(szItem), "[%i]     | %i pts   | %s", rank, points, szPlayerName);
+            //else
+            //    Format(szItem, sizeof(szItem), "[0%i]   | %i pts    | %s", rank, points, szPlayerName);
+
+            if (rank < 10)
+			    Format(szRank, 16, "[0%i]  ", rank);
+			else
+			    Format(szRank, 16, "[%i]  ", rank);
+
+            if (points < 10)
+			    Format(szItem, sizeof(szItem), "%s       %i pts        %s", szRank, points, szPlayerName);
+			else if (points < 100)
+			    Format(szItem, sizeof(szItem), "%s     %i pts        %s", szRank, points, szPlayerName);
+			else if (points < 1000)
+			    Format(szItem, sizeof(szItem), "%s   %i pts        %s", szRank, points, szPlayerName);
+			else if (points < 10000)
+			    Format(szItem, sizeof(szItem), "%s %i pts        %s", szRank, points, szPlayerName);
+			else if (points < 1000000)
+			    Format(szItem, sizeof(szItem), "%s %i pts   %s", szRank, points, szPlayerName);
+			else
+			    Format(szItem, sizeof(szItem), "%s %i pts %s", szRank, points, szPlayerName);
+
+            AddMenuItem(menu, szSteamID, szItem, ITEMDRAW_DEFAULT);
+
+            rank++;
+        }
+        
+        SetMenuPagination(menu, 5);
+        SetMenuExitButton(menu, true);
+        DisplayMenu(menu, client, MENU_TIME_FOREVER);
+        
+    }
+    else{
+        CPrintToChat(client, "%t", "Overall_Challenge_LeaderBoard_Empty", g_szChatPrefix, g_szStyleMenuPrint[style]);
+    }
+
+}
+
+public int Menu_OverallChallengeTopHandler(Menu menu, MenuAction action, int param1, int param2)
+{
+    if (action == MenuAction_Select){
+        char szsteamid[32];
+        GetMenuItem(menu, param2, szsteamid, sizeof(szsteamid));
+        db_viewPlayerProfile(param1, szsteamid);
+    }
+	else if (action == MenuAction_End) {
+		delete menu;
+	}
+
+    return 0;
 }
 
 //SHOW CHALLENGE LEADERBOARD
@@ -532,18 +824,17 @@ public Action LeaderBoard(int client, int args)
     if(!IsValidClient(client))
         return Plugin_Handled;
 
-    db_SelectChallengeTop(client);
+    db_SelectCurrentChallengeTop(client);
 
     return Plugin_Handled;
 }
 
-public void db_SelectChallengeTop(int client){
+public void db_SelectCurrentChallengeTop(int client){
 
     if(g_bIsChallengeActive){
         char szQuery[255];
         Format(szQuery, sizeof(szQuery), "SELECT name, runtime, style FROM ck_challenge_times WHERE id = '%i' ORDER BY runtime ASC LIMIT 50;", g_iChallenge_ID);
-        PrintToServer(szQuery);
-        SQL_TQuery(g_hDb, sql_SelectChallengeTopCallback, szQuery, client, DBPrio_Low);
+        SQL_TQuery(g_hDb, sql_SelectCurrentChallengeTopCallback, szQuery, client, DBPrio_Low);
     }
     else{
         CPrintToChat(client, "%t", "Challenge_Inactive", g_szChatPrefix);
@@ -551,41 +842,37 @@ public void db_SelectChallengeTop(int client){
 
 }
 
-public void sql_SelectChallengeTopCallback(Handle owner, Handle hndl, const char[] error, any client)
+public void sql_SelectCurrentChallengeTopCallback(Handle owner, Handle hndl, const char[] error, any client)
 {
     if (hndl == null)
     {
-        LogError("[Map Challenge] SQL Error (sql_SelectChallengeTopCallback): %s", error);
+        LogError("[Map Challenge] SQL Error (sql_SelectCurrentChallengeTopCallback): %s", error);
         return;
     }
     
     if (SQL_HasResultSet(hndl)){
-
-        int style = SQL_FetchInt(hndl, 2);
-
         Menu menu = new Menu(Menu_ChallengeTopHandler);
-        menu.SetTitle("Map Challenge TOP for %s | %s \n    Rank   Time           Difference         Player\n", g_sChallenge_MapName, g_szStyleMenuPrint[style]);
 
         char szItem[64];
-        int rank=1;
+        int rank = 1;
+
+        int style = -1;
 
         float rank_1_time = 0.0;
         float runtime_difference = 0.0;
+
         while(SQL_FetchRow(hndl)){
 
             char szPlayerName[32];
             SQL_FetchString(hndl, 0, szPlayerName, sizeof(szPlayerName));
 
-            //when uysing select it always return TRUE using SQL_HasResultSet() so I just compare the value of a column to an empty string for the first row returned
-            if(strcmp(szPlayerName, "") == 0){
-                CPrintToChat(client, "%t", "Challenge_LeaderBoard_Empty", g_szChatPrefix);
-                return;
-            }
 
             float player_runtime = SQL_FetchFloat(hndl, 1);
             char szFormattedRuntime[64];
             char szFormattedDifference[64];
             FormatTimeFloat(client, player_runtime, 3, szFormattedRuntime, sizeof(szFormattedRuntime));
+
+            style = SQL_FetchInt(hndl, 2);
 
             switch(style){
                 case 0: Format(szItem, sizeof(szItem), "[0%i]   | %s | (+00:00:00) | %s", rank, szFormattedRuntime, szPlayerName);
@@ -613,7 +900,15 @@ public void sql_SelectChallengeTopCallback(Handle owner, Handle hndl, const char
 
             rank++;
         }
-        
+
+        if(style == -1){
+            CPrintToChat(client, "%t", "Challenge_LeaderBoard_Empty", g_szChatPrefix);
+            return;
+        }
+
+
+        menu.SetTitle("Map Challenge TOP for %s | %s \n    Rank   Time           Difference         Player\n", g_sChallenge_MapName, g_szStyleMenuPrint[style]);
+
         SetMenuPagination(menu, 5);
         SetMenuExitButton(menu, true);
         DisplayMenu(menu, client, MENU_TIME_FOREVER);
@@ -682,11 +977,11 @@ public void sql_GetRemainingTimeCallback(Handle owner, Handle hndl, const char[]
 
 public Action Check_Challenge_End(Handle timer)
 {
-
-    char szQuery[1024];
-    PrintToServer(szQuery);
-    Format(szQuery, sizeof(szQuery), "SELECT TIMESTAMPDIFF(SECOND,CURRENT_TIMESTAMP, EndDate) as Time_Diff FROM ck_challenges WHERE id = '%i';", g_iChallenge_ID);
-    SQL_TQuery(g_hDb, sql_Check_Challenge_EndCallback, szQuery, DBPrio_Low);
+    if(g_bIsChallengeActive){
+        char szQuery[1024];
+        Format(szQuery, sizeof(szQuery), "SELECT TIMESTAMPDIFF(SECOND,CURRENT_TIMESTAMP, EndDate) as Time_Diff FROM ck_challenges WHERE id = '%i';", g_iChallenge_ID);
+        SQL_TQuery(g_hDb, sql_Check_Challenge_EndCallback, szQuery, DBPrio_Low);
+    }
 
     return Plugin_Continue;
 
@@ -720,7 +1015,7 @@ public void sql_Check_Challenge_EndCallback(Handle owner, Handle hndl, const cha
 public void db_DistributePoints(){
 
     char szQuery[1024];
-    Format(szQuery, sizeof(szQuery), "SELECT steamid, style FROM ck_challenge_times WHERE id = '%i' AND active = '1' ORDER BY runtime ASC;", g_iChallenge_ID);
+    Format(szQuery, sizeof(szQuery), "SELECT steamid, style FROM ck_challenge_times WHERE id = '%i' ORDER BY runtime ASC;", g_iChallenge_ID);
     SQL_TQuery(g_hDb, sql_DistributePointsCallback, szQuery, DBPrio_Low);
 
 }
@@ -737,17 +1032,17 @@ public void sql_DistributePointsCallback(Handle owner, Handle hndl, const char[]
         
         int rank = 1;
         char szPlayerSteamID[32];
+        int style;
+        int points_to_add;
         while(SQL_FetchRow(hndl)){
             SQL_FetchString(hndl, 0, szPlayerSteamID, sizeof(szPlayerSteamID));
 
-            int style = SQL_FetchInt(hndl, 1);
-
-            int points_to_add;
+            style = SQL_FetchInt(hndl, 1);
 
             if(rank == 1)
                 points_to_add = g_iChallenge_Points;
-            if(1 < rank <= 10)
-                points_to_add = RoundToFloor((g_iChallenge_Points / 2) * ((10 - rank) * 0.100));
+            else if(1 < rank <= 10)
+                points_to_add = (g_iChallenge_Points / 2) - ((rank-2) * 100);
             else
                 points_to_add = 5;
     
@@ -763,7 +1058,6 @@ public void sql_DistributePointsCallback(Handle owner, Handle hndl, const char[]
 public void AddChallengePoints(char szSteamID[32], int style, int points_to_add)
 {
     char szQuery[1024];
-    PrintToServer(szQuery);
     Format(szQuery, sizeof(szQuery), "UPDATE ck_challenge_players SET points = points + %i WHERE steamid = '%s' AND style = %i;", points_to_add, szSteamID, style);
     SQL_TQuery(g_hDb, SQL_CheckCallback, szQuery, DBPrio_Low); 
 }
@@ -774,7 +1068,6 @@ public Action Challenge_Info(int client, int args)
         return Plugin_Handled;
 
     char szQuery[1024];
-    PrintToServer(szQuery);
     Format(szQuery, sizeof(szQuery), "SELECT id, mapname, StartDate, EndDate, points, style, TIMESTAMPDIFF(SECOND,CURRENT_TIMESTAMP, EndDate) as Time_Diff FROM ck_challenges WHERE active = 1;");
     SQL_TQuery(g_hDb, SQL_Challenge_InfoCallback, szQuery, client, DBPrio_Low); 
 

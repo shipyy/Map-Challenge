@@ -45,4 +45,14 @@
 		"#format"	"{1:s}"
 		"en"		"{blue}{1}{default} | {red}The rewardsh have been distributed."
 	}
+	"Overall_Challenge_LeaderBoard_Empty"
+	{
+		"#format"	"{1:s},{2:s}"
+		"en"		"{blue}{1}{default} | {red}There are no player records for the overall {blue}{2}{default} style TOP."
+	}
+	"Challenge_NewTime"
+	{
+		"#format"	"{1:s}"
+		"en"		"{blue}{1}{default} | New challenge Personal Best."
+	}
 }

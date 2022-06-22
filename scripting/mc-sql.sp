@@ -37,7 +37,7 @@ public void db_setupDatabase()
 	SQL_FastQuery(g_hDb, "SET NAMES 'utf8mb4'");
 
 	// If tables haven't been created yet.
-	if (!SQL_FastQuery(g_hDb, "SELECT mapname FROM ck_challenges LIMIT 1"))
+	if (!SQL_FastQuery(g_hDb, "SELECT name FROM ck_challenge_players LIMIT 1"))
 	{
 		SQL_UnlockDatabase(g_hDb);
 		db_createTables();
