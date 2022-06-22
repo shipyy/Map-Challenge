@@ -8,10 +8,6 @@ You can customize the map, style, duration of the callenge and points received.
 ## Installation
 
 * Download Release Files and simply drag and drop onto your csgo folder
-* Run Query -> "ALTER TABLE ck_playerrank ADD challenge_points int(11) NOT NULL DEFAULT '0';"
-* Merge Following Commits to your Surftimer code.
-  * https://github.com/shipyy/Surftimer-Official/commit/e2001205b0e80c4ccc8cf6440bb49ec67850dee1
-  * https://github.com/shipyy/Surftimer-Official/commit/4c671ce35f356b74297ab71acc09b4bc147e6efe
 
 ## Requirements
 
@@ -21,10 +17,6 @@ You can customize the map, style, duration of the callenge and points received.
 
 **Plugins**
 * [SurfTimer](https://github.com/surftimer/SurfTimer)
-
-**Commits**
-* https://github.com/shipyy/Surftimer-Official/commit/e2001205b0e80c4ccc8cf6440bb49ec67850dee1
-* https://github.com/shipyy/Surftimer-Official/commit/4c671ce35f356b74297ab71acc09b4bc147e6efe
 
 ## Showcase
 
