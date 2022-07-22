@@ -23,8 +23,11 @@ You can customize the map, style, duration of the callenge and points received.
 # Challenge info display
 ![image](https://user-images.githubusercontent.com/70631212/174004494-50fceb52-9c6f-4d9d-8338-a75c5e864028.png)
 
-# Challenge Top Players with times
+# Ongoing Challenge Top Players with times
 ![image](https://user-images.githubusercontent.com/70631212/174004447-840e1c62-3551-4584-8843-80d618d7f24c.png)
+
+# Discord Notification When A new challenge is created
+![image](https://user-images.githubusercontent.com/70631212/180581059-6021cabf-eb82-4ebb-97e6-81e106ed8336.png)
 
 ## More Details
 To create a new challenge ```sm_add_challenge <mapname> <style> <top1_points> <duration (in days)>```.
@@ -33,6 +36,7 @@ An admin can end the current challenge via cmd, which will also distribute the p
 The point distribution is done automatically either when an admin uses the ```sm_end_challenge``` cmd OR when the duration of the challenge has reached the final date
 
 ## Future Ideas
-* Discord Integration (working on it)
-* Multiple Challenges
-* Better point distribuition ?
+* Discord Integration (Done)
+* Multiple Challenges (?)
+* Better point distribuition (?)
+* Add discord notification when the challenge has ended with the player who won
