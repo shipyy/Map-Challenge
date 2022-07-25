@@ -109,7 +109,7 @@ public void OnMapStart(){
     //COMMANDS
     RegConsoleCmd("sm_challenge", Challenge_Info, "[Map Challenge] Displays additional information of the ongoing challenge");
     RegConsoleCmd("sm_mcp", ChallengeProfile, "[Map Challenge] Displays the players profile");
-    RegConsoleCmd("sm_mctop", TopLeaderBoard, "[Map Challenge] Displays the top players on the challenge leaderboard (TOP 50)");
+    RegConsoleCmd("sm_mctop", TopLeaderBoard, "[Map Challenge] Displays the overall challenge top players (TOP 50) (TOP 50)");
     RegConsoleCmd("sm_mcct", LeaderBoard, "[Map Challenge] Displays the ongoing challenge leaderboard (TOP 50)");
     RegConsoleCmd("sm_mct", Challenge_Timeleft, "[Map Challenge] Displays remaining time left of the current challenge");
     RegAdminCmd("sm_add_challenge", Create_Challenge, ADMFLAG_ROOT, "[Map Challenge] Add new challenge");
