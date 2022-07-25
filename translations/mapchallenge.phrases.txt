@@ -23,7 +23,7 @@
     "Challenge_Timeleft"
 	{
 		"#format"	"{1:s},{2:s}"
-		"en"		"{blue}{1}{default} | {yellow}{2}"
+		"en"		"{blue}{1}{default} | Timeleft : {yellow}{2}"
 	}
     "Add_Challenge_ERROR_Format"
 	{
@@ -54,5 +54,10 @@
 	{
 		"#format"	"{1:s}"
 		"en"		"{blue}{1}{default} | New challenge Personal Best."
+	}
+	"Challenge_Ongoing"
+	{
+		"#format"	"{1:s},{2:s}"
+		"en"		"{blue}{1}{default} | There is a map challenge ongoing in {red}{2}{default}"
 	}
 }

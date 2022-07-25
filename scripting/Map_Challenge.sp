@@ -65,15 +65,16 @@ char g_szSteamID[MAXPLAYERS + 1][32];
 char g_szChatPrefix[64] = "MAP CHALLENGE";
 
 GlobalForward g_NewChallengeForward;
+GlobalForward g_ChallengeEndForward;
 
 /* ----- INCLUDES ----- */
 #include <surftimer>
 #include <colorlib>
 #include <map-challenge>
-#include "scripting/mc-queries.sp"
-#include "scripting/mc-sql.sp"
-#include "scripting/mc-misc.sp"
-#include "scripting/mc-api.sp"
+#include "mc-queries.sp"
+#include "mc-sql.sp"
+#include "mc-misc.sp"
+#include "mc-api.sp"
 
 #define PERCENT 0x25
 #define MAX_STYLES 8
@@ -129,6 +130,17 @@ public void OnClientPutInServer(int client)
     GetClientAuthId(client, AuthId_Steam2, g_szSteamID[client], MAX_NAME_LENGTH, true);
 }
 
+public void ResetDefaults(){
+    //SET DEFAULTS
+    g_bIsChallengeActive = false;
+    g_bIsCurrentMapChallenge = false;
+
+    g_iChallenge_Initial_TimeStamp = 0;
+    g_iChallenge_Final_TimeStamp = 0;
+    g_iChallenge_Style = 0;
+    g_sChallenge_MapName = "";
+}
+
 public void db_CheckChallengeActive()
 {
     char szQuery[255];
@@ -144,10 +156,11 @@ public void sql_CheckChallengeActiveCallback(Handle owner, Handle hndl, const ch
 		return;
 	}
 
-	// Found old time from database
 	if (SQL_HasResultSet(hndl) && SQL_FetchRow(hndl)){
         if(SQL_FetchInt(hndl, 1) == 1){
-            
+            SQL_FetchString(hndl, 2, g_sChallenge_MapName, sizeof(g_sChallenge_MapName));
+            PrintToServer("\n\n\nLoaded MapName : %s\n\n\n", g_sChallenge_MapName);
+
             g_iChallenge_Initial_TimeStamp = SQL_FetchInt(hndl, 4);
             g_iChallenge_Final_TimeStamp = SQL_FetchInt(hndl, 5);
 
@@ -159,23 +172,22 @@ public void sql_CheckChallengeActiveCallback(Handle owner, Handle hndl, const ch
 
             //REACHED END OF CHALLENGE
             if(time_diff <= 0){
-                db_EndCurrentChallenge(g_iChallenge_ID);
+                db_EndCurrentChallenge(0, g_iChallenge_ID);
             }
             else{
                 g_bIsChallengeActive = true;
-                SQL_FetchString(hndl, 2, g_sChallenge_MapName, sizeof(g_sChallenge_MapName));
 
                 if(StrEqual(g_szMapName, g_sChallenge_MapName, false))
                     g_bIsCurrentMapChallenge = true;
 
                 //Timer that check regularly if the time remaining of current challenge has run out
-                CreateTimer(100.0, Check_Challenge_End, INVALID_HANDLE, TIMER_FLAG_NO_MAPCHANGE | TIMER_REPEAT);
+                CreateTimer(360.0, Check_Challenge_End, INVALID_HANDLE, TIMER_REPEAT);
             }
         }
         else{
             g_bIsChallengeActive = false;
             g_iChallenge_ID = SQL_FetchInt(hndl, 0);
-            SQL_FetchString(hndl, 2, g_sChallenge_MapName, sizeof(g_sChallenge_MapName));
+            //SQL_FetchString(hndl, 2, g_sChallenge_MapName, sizeof(g_sChallenge_MapName));
         }
     }
 }
@@ -271,7 +283,7 @@ public void db_AddChallenge(int client, char szMapName[32], int style, int point
 
     //GET TIME STAMPS IN UNIX CODE
     g_iChallenge_Initial_TimeStamp = GetTime();
-    g_iChallenge_Final_TimeStamp = g_iChallenge_Initial_TimeStamp + ( 60 * 60 * (24 * duration) + (3600) );
+    g_iChallenge_Final_TimeStamp = g_iChallenge_Initial_TimeStamp + (60 * 60 * (24 * duration));
     //g_iChallenge_Duration = duration;
 
     //FORMAT UNIX TIMESTAMPS TO THE FORMAT USED IN THE DATABASE
@@ -303,7 +315,9 @@ public void SQLTxn_AddChallenge_Success(Handle db, any data, int numQueries, Han
     CPrintToChatAll("%t", "Challenge_Added", g_szChatPrefix, g_sChallenge_MapName);
     PrintToServer("[Map Challenge] Challenge Successfully Created");
 
-    SendNewChallengeForward(data, g_sChallenge_MapName);
+    CreateTimer(360.0, Check_Challenge_End, INVALID_HANDLE, TIMER_REPEAT);
+
+    SendNewChallengeForward(data);
 }
 
 public void SQLTxn_AddChallenge_Failed(Handle db, any data, int numQueries, const char[] error, int failIndex, any[] queryData)
@@ -317,39 +331,29 @@ public Action Manual_ChallengeEnd(int client, int args)
 		return Plugin_Handled;
 
     if(g_bIsChallengeActive)
-        db_EndCurrentChallenge(g_iChallenge_ID);
+        db_EndCurrentChallenge(client, g_iChallenge_ID);
     else
         CPrintToChat(client, "%t", "Challenge_Inactive", g_szChatPrefix);
     
     return Plugin_Handled;
 }
 
-public void db_EndCurrentChallenge(int challenge_ID)
+public void db_EndCurrentChallenge(int client, int challenge_ID)
 {
-
     char szQuery[256];
     Format(szQuery, sizeof(szQuery), "UPDATE ck_challenges SET active = 0 WHERE id = '%i';", challenge_ID);
-    SQL_TQuery(g_hDb, sql_EndCurrentChallengeCallback, szQuery, challenge_ID, DBPrio_Low);
+    SQL_TQuery(g_hDb, sql_EndCurrentChallengeCallback, szQuery, client, DBPrio_Low);
 }
 
-public void sql_EndCurrentChallengeCallback(Handle owner, Handle hndl, const char[] error, any pack)
+public void sql_EndCurrentChallengeCallback(Handle owner, Handle hndl, const char[] error, any client)
 {
     if (hndl == null)
     {
         LogError("[Map Challange] SQL Error (sql_EndCurrentChallengeCallback): %s", error);
         return;
     }
-    else{
-        db_DistributePoints();
-        //SET DEFAULTS
-        g_bIsChallengeActive = false;
-        g_bIsCurrentMapChallenge = false;
-
-        g_iChallenge_Initial_TimeStamp = 0;
-        g_iChallenge_Final_TimeStamp = 0;
-        g_iChallenge_Style = 0;
-        g_sChallenge_MapName = "";
-    }
+    
+    db_DistributePoints(client);
 }
 
 public Action surftimer_OnMapFinished(int client, float fRunTime, char sRunTime[54], int rank, int total, int style)
@@ -824,22 +828,19 @@ public Action LeaderBoard(int client, int args)
     if(!IsValidClient(client))
         return Plugin_Handled;
 
-    db_SelectCurrentChallengeTop(client);
+    if(g_bIsChallengeActive)
+        db_SelectCurrentChallengeTop(client);
+    else
+        CPrintToChat(client, "%t", "Challenge_Inactive", g_szChatPrefix);
 
     return Plugin_Handled;
 }
 
-public void db_SelectCurrentChallengeTop(int client){
-
-    if(g_bIsChallengeActive){
-        char szQuery[255];
-        Format(szQuery, sizeof(szQuery), "SELECT name, runtime, style FROM ck_challenge_times WHERE id = '%i' ORDER BY runtime ASC LIMIT 50;", g_iChallenge_ID);
-        SQL_TQuery(g_hDb, sql_SelectCurrentChallengeTopCallback, szQuery, client, DBPrio_Low);
-    }
-    else{
-        CPrintToChat(client, "%t", "Challenge_Inactive", g_szChatPrefix);
-    }
-
+public void db_SelectCurrentChallengeTop(int client)
+{
+    char szQuery[255];
+    Format(szQuery, sizeof(szQuery), "SELECT name, runtime, style FROM ck_challenge_times WHERE id = '%i' ORDER BY runtime ASC LIMIT 50;", g_iChallenge_ID);
+    SQL_TQuery(g_hDb, sql_SelectCurrentChallengeTopCallback, szQuery, client, DBPrio_Low);
 }
 
 public void sql_SelectCurrentChallengeTopCallback(Handle owner, Handle hndl, const char[] error, any client)
@@ -935,7 +936,10 @@ public Action Challenge_Timeleft(int client, int args)
     if(!IsValidClient(client))
         return Plugin_Handled;
 
-    db_GetRemainingTime(client);
+    if(g_bIsChallengeActive)
+        db_GetRemainingTime(client);
+    else
+        CPrintToChat(client, "%t", "Challenge_Inactive", g_szChatPrefix);
 
     return Plugin_Handled;
 }
@@ -983,8 +987,7 @@ public Action Check_Challenge_End(Handle timer)
         SQL_TQuery(g_hDb, sql_Check_Challenge_EndCallback, szQuery, DBPrio_Low);
     }
 
-    return Plugin_Continue;
-
+    return Plugin_Handled;
 }
 
 public void sql_Check_Challenge_EndCallback(Handle owner, Handle hndl, const char[] error, any data)
@@ -1002,34 +1005,49 @@ public void sql_Check_Challenge_EndCallback(Handle owner, Handle hndl, const cha
         char sztimeleft[32];
 
         if(time_diff <= 0){
-            db_EndCurrentChallenge(g_iChallenge_ID);
+            db_EndCurrentChallenge(0, g_iChallenge_ID);
         }
         else{
             FormatTimeFloat(data, time_diff, 7, sztimeleft, sizeof(sztimeleft));
 
-            CPrintToChat(data, "%t", "Challenge_Timeleft", g_szChatPrefix, sztimeleft);
+            for(int i = 1; i <= MaxClients; i++)
+            {
+                if (IsValidClient(i) && !IsFakeClient(i)) {
+                    CPrintToChat(i, "%t", "Challenge_Timeleft", g_szChatPrefix, sztimeleft);
+                    CPrintToChat(i, "%t", "Challenge_Ongoing", g_szChatPrefix, g_sChallenge_MapName);
+                }
+            }
         }
     }
 }
 
-public void db_DistributePoints(){
+public void db_DistributePoints(int client){
 
     char szQuery[1024];
-    Format(szQuery, sizeof(szQuery), "SELECT steamid, style FROM ck_challenge_times WHERE id = '%i' ORDER BY runtime ASC;", g_iChallenge_ID);
-    SQL_TQuery(g_hDb, sql_DistributePointsCallback, szQuery, DBPrio_Low);
+    Format(szQuery, sizeof(szQuery), "SELECT steamid, style, name, mapname FROM ck_challenge_times WHERE id = '%i' ORDER BY runtime ASC;", g_iChallenge_ID);
+    SQL_TQuery(g_hDb, sql_DistributePointsCallback, szQuery, client, DBPrio_Low);
 
 }
 
 public void sql_DistributePointsCallback(Handle owner, Handle hndl, const char[] error, any data)
 {
-	if (hndl == null)
+    if (hndl == null)
 	{
 		LogError("[Map Challenge] SQL Error (sql_DistributePointsCallback): %s", error);
 		return;
 	}
 
-	if (SQL_HasResultSet(hndl)){
-        
+    if (SQL_HasResultSet(hndl)) {
+        ArrayList szTop5 = new ArrayList(32);
+
+        if(SQL_GetRowCount(hndl) <= 0){
+            SendChallengeEndForward(data, szTop5, 0);
+            ResetDefaults();
+            return;
+        }
+
+        int nr_players = SQL_GetRowCount(hndl);
+
         int rank = 1;
         char szPlayerSteamID[32];
         int style;
@@ -1048,11 +1066,22 @@ public void sql_DistributePointsCallback(Handle owner, Handle hndl, const char[]
     
             AddChallengePoints(szPlayerSteamID, style, points_to_add);
 
+            if (rank <= 5) {
+                char sztemp[32];
+                SQL_FetchString(hndl, 2, sztemp, sizeof(sztemp));
+                szTop5.PushString(sztemp);
+            }
+
+            if(rank == nr_players)
+                SendChallengeEndForward(data, szTop5, nr_players);
+
             rank++;
         }
 
         CPrintToChatAll("%t", "Challenge_Points_Distributed", g_szChatPrefix);
     }
+
+    ResetDefaults();
 }
 
 public void AddChallengePoints(char szSteamID[32], int style, int points_to_add)
