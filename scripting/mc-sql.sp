@@ -18,7 +18,7 @@ public void db_setupDatabase()
 
 	if (strcmp(szIdent, "mysql", false) == 0)
 	{
-		// https://github.com/nikooo777/ckSurf/pull/58
+		SQL_LockDatabase(g_hDb);
 		SQL_FastQuery(g_hDb, "SET sql_mode=(SELECT REPLACE(@@sql_mode,'ONLY_FULL_GROUP_BY',''));");
 	}
 	else if (strcmp(szIdent, "sqlite", false) == 0)
@@ -32,10 +32,6 @@ public void db_setupDatabase()
 		return;
 	}
 
-	// If updating from a previous version
-	SQL_LockDatabase(g_hDb);
-	SQL_FastQuery(g_hDb, "SET NAMES 'utf8mb4'");
-
 	// If tables haven't been created yet.
 	if (!SQL_FastQuery(g_hDb, "SELECT name FROM ck_challenge_players LIMIT 1"))
 	{
@@ -46,8 +42,6 @@ public void db_setupDatabase()
 	
 	SQL_UnlockDatabase(g_hDb);
 
-	for (int i = 0; i < sizeof(g_failedTransactions); i++)
-		g_failedTransactions[i] = 0;
 }
 
 public void db_createTables()

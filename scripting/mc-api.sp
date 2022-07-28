@@ -11,20 +11,20 @@ void Register_Forwards()
 }
 
 /**
- * Sends a new record forward on surftimer_OnNewChallenge.
+ * Sends a new forward on mapchallenge_OnNewChallenge.
  * 
- * @param szChallenge_MapName     String containing the challenges map name.
- * @param g_iChallenge_Style      String containing the challenges style.
- * @param g_iChallenge_Points      integer containing the challenge rank1 points.
- * @param szInitialTimeFormatted      String containing the challenges start date.
- * @param szFinalTimeFormatted      String containing the challenges end date.
+ * @param szChallenge_MapName           String containing the challenges map name.
+ * @param g_iChallenge_Style            String containing the challenges style.
+ * @param g_iChallenge_Points           integer containing the challenge rank1 points.
+ * @param szInitialTimeFormatted        String containing the challenges start date.
+ * @param szFinalTimeFormatted          String containing the challenges end date.
  */
 void SendNewChallengeForward(int client)
 {
-    /* Start New record function call */
+    //START FORWARD CALL
     Call_StartForward(g_NewChallengeForward);
 
-    /* Push parameters one at a time */
+    //PUSH PARAMETERS
     Call_PushCell(client);
     Call_PushString(g_sChallenge_MapName);
     Call_PushCell(g_iChallenge_Style);
@@ -39,25 +39,25 @@ void SendNewChallengeForward(int client)
     Call_PushString(szInitialTimeFormatted);
     Call_PushString(szFinalTimeFormatted);
 
-    /* Finish the call, get the result */
+    //FINISH CALL
     Call_Finish();
 }
 
 /**
- * Sends a new record forward on surftimer_OnNewChallenge.
+ * Sends a new forward on mapchallenge_OnChallengeEnd.
  * 
- * @param szChallenge_MapName     String containing the challenges map name.
- * @param g_iChallenge_Style      String containing the challenges style.
- * @param g_iChallenge_Points      integer containing the challenge rank1 points.
- * @param szInitialTimeFormatted      String containing the challenges start date.
- * @param szFinalTimeFormatted      String containing the challenges end date.
+ * @param szChallenge_MapName           String containing the challenges map name.
+ * @param g_iChallenge_Style            String containing the challenges style.
+ * @param g_iChallenge_Points           integer containing the challenge rank1 points.
+ * @param szInitialTimeFormatted        String containing the challenges start date.
+ * @param szFinalTimeFormatted          String containing the challenges end date.
  */
 void SendChallengeEndForward(int client, ArrayList szChallengeTop5, int totalparticipants)
 {
-    /* Start New record function call */
+    //START FORWARD CALL
     Call_StartForward(g_ChallengeEndForward);
 
-    /* Push parameters one at a time */
+    //PUSH PARAMETERS
     Call_PushCell(client);
     Call_PushString(g_sChallenge_MapName);
     Call_PushCell(g_iChallenge_Style);
@@ -80,7 +80,7 @@ void SendChallengeEndForward(int client, ArrayList szChallengeTop5, int totalpar
 
     Call_PushCell(totalparticipants);
 
-    /* Finish the call, get the result */
+    //FINISH CALL
     Call_Finish();
 }
 

@@ -1,3 +1,4 @@
+//CODE FROM https://github.com/surftimer/SurfTimer
 public void FormatTimeFloat(int client, float time, int type, char[] string, int length)
 {
 	char szMilli[16];
@@ -228,13 +229,4 @@ public void FormatTimeFloat(int client, float time, int type, char[] string, int
 		}
 		
 	}
-}
-
-public int GetStyleIndex(char[] szBuffer)
-{
-	for (int i = 0; i < sizeof(g_szStyleAcronyms); i++)
-		if (StrEqual(szBuffer, g_szStyleAcronyms[i]))
-			return i;
-
-	return -1;
 }

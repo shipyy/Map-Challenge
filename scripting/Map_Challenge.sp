@@ -17,9 +17,6 @@ public Plugin myinfo =
 // SQL driver
 Handle g_hDb = null;
 
-// Used to track failed transactions when making database changes
-int g_failedTransactions[2];
-
 //CHALLENGE
 int g_iChallenge_ID = -1;
 bool g_bIsChallengeActive = false;
@@ -47,18 +44,6 @@ char g_szStyleMenuPrint[][] =
 	"Freestyle"
 };
 
-char g_szStyleAcronyms[][] =
-{
-	"n",
-	"sw",
-	"hsw",
-	"bw",
-	"lg",
-	"sm",
-	"ff",
-	"fs"
-};
-
 // Client's steamID
 char g_szSteamID[MAXPLAYERS + 1][32];
 
@@ -76,7 +61,6 @@ GlobalForward g_ChallengeEndForward;
 #include "mc-misc.sp"
 #include "mc-api.sp"
 
-#define PERCENT 0x25
 #define MAX_STYLES 8
 
 stock bool IsValidClient(int client)
@@ -86,9 +70,6 @@ stock bool IsValidClient(int client)
     return false;
 }
 
-//CHECK IF CHALLENGE IS ACTIVE
-	//END CHALLENGE
-	//FORWARD ONMAPFINISH
 public void OnPluginStart()
 {
     EngineVersion eGame = GetEngineVersion();
@@ -131,7 +112,6 @@ public void OnClientPutInServer(int client)
 }
 
 public void ResetDefaults(){
-    //SET DEFAULTS
     g_bIsChallengeActive = false;
     g_bIsCurrentMapChallenge = false;
 
@@ -279,27 +259,19 @@ public void db_AddChallenge(int client, char szMapName[32], int style, int point
         g_bIsCurrentMapChallenge = true;
 
     char szInitial_TimeStamp[32];
-    //char szFinal_TimeStamp[32];
 
     //GET TIME STAMPS IN UNIX CODE
     g_iChallenge_Initial_TimeStamp = GetTime();
     g_iChallenge_Final_TimeStamp = g_iChallenge_Initial_TimeStamp + (60 * 60 * (24 * duration));
-    //g_iChallenge_Duration = duration;
 
-    //FORMAT UNIX TIMESTAMPS TO THE FORMAT USED IN THE DATABASE
+    //FORMAT UNIX TIMESTAMP TO THE FORMAT USED IN THE DATABASE
     FormatTime(szInitial_TimeStamp, sizeof(szInitial_TimeStamp), "%F %X", g_iChallenge_Initial_TimeStamp);
-    //FormatTime(szFinal_TimeStamp, sizeof(szFinal_TimeStamp), "%F %X", g_iChallenge_Final_TimeStamp);
-
-    //char szFinal_TimeStamp_SQL_FORMAT[128];
-    //Format(szFinal_TimeStamp_SQL_FORMAT, sizeof(szFinal_TimeStamp_SQL_FORMAT), "DATE_ADD(%s, INTERVAL %i DAY)", szInitial_TimeStamp, duration); 
 
     char szQuery_Insert[1024];
     Format(szQuery_Insert, sizeof(szQuery_Insert), "INSERT INTO ck_challenges (mapname, StartDate, style, points, active) VALUES ('%s', '%s', '%i', '%i', '%i');", szMapName, szInitial_TimeStamp, g_iChallenge_Style, g_iChallenge_Points, 1);
-    //SQL_TQuery(g_hDb, sql_db_AddChallengeCallback, szQuery, duration, DBPrio_Low);
 
     char szQuery_Update[1024];
     Format(szQuery_Update, sizeof(szQuery_Update), "UPDATE ck_challenges SET EndDate = DATE_ADD(StartDate, INTERVAL %i DAY);", duration);
-    //SQL_TQuery(g_hDb, sql_db_AddChallengeCallback, szQuery, duration, DBPrio_Low);
     
     Transaction add_challange_transactions = SQL_CreateTransaction();
     SQL_AddQuery(add_challange_transactions, szQuery_Insert);
@@ -393,7 +365,6 @@ public void sql_PlayerExistsCheckCallback(Handle owner, Handle hndl, const char[
 	float runtime = ReadPackFloat(pack);
 	int style = ReadPackCell(pack);
     
-    // Found old time from database
 	if (SQL_HasResultSet(hndl) && SQL_FetchRow(hndl))
         db_TimesExistsCheck(client, runtime, style);
 	else
@@ -408,13 +379,10 @@ public void db_InsertPlayer(int client, float runtime, int style)
     WritePackCell(pack, style);
     
     char szUName[MAX_NAME_LENGTH];
+    
+    GetClientName(client, szUName, MAX_NAME_LENGTH);
 
-    if (IsValidClient(client))
-		GetClientName(client, szUName, MAX_NAME_LENGTH);
-	else
-		return;
-
-    //ESCPA NAME STRING
+    //ESCAPE NAME STRING
     char szName[MAX_NAME_LENGTH * 2 + 1];
     SQL_EscapeString(g_hDb, szUName, szName, MAX_NAME_LENGTH * 2 + 1);
     
@@ -448,12 +416,8 @@ public void sql_InsertPlayerCallback(Handle owner, Handle hndl, const char[] err
     db_TimesExistsCheck(client, runtime, style);
 }
 
-
 public void db_TimesExistsCheck(int client, float runtime, int style)
 {
-    if (!IsValidClient(client))
-		return;
-    
     Handle pack = CreateDataPack();
     WritePackCell(pack, client);
     WritePackFloat(pack, runtime);
@@ -496,9 +460,6 @@ public void sql_TimesExistsCheckCallback(Handle owner, Handle hndl, const char[]
 
 public void db_UpdateTime(int client, float runtime, int style)
 {
-	if (!IsValidClient(client))
-		return;
-
 	//FORMAT UNIX TIMESTAMPS TO THE FORMAT USED IN THE DATABASE
 	char szInitial_TimeStamp[32];
 	char szFinal_TimeStamp[32];
@@ -513,13 +474,9 @@ public void db_UpdateTime(int client, float runtime, int style)
 public void db_InsertTime(int client, float runtime, int style)
 {
 	char szUName[MAX_NAME_LENGTH];
+	GetClientName(client, szUName, MAX_NAME_LENGTH);
 
-	if (IsValidClient(client))
-		GetClientName(client, szUName, MAX_NAME_LENGTH);
-	else
-		return;
-
-	//ESCPA NAME STRING
+	//ESCAPE NAME STRING
 	char szName[MAX_NAME_LENGTH * 2 + 1];
 	SQL_EscapeString(g_hDb, szUName, szName, MAX_NAME_LENGTH * 2 + 1);
 
@@ -550,6 +507,9 @@ public void sql_UpdateTimesCallback(Handle owner, Handle hndl, const char[] erro
 //CODE BASE RETRIVED FROM https://github.com/surftimer/SurfTimer
 public Action ChallengeProfile(int client, int args)
 {
+    if(!IsValidClient(client))
+        return Plugin_Handled;
+
     char szSteamID[32];
     Format(szSteamID, sizeof(szSteamID), "");
     
@@ -764,15 +724,11 @@ public void sql_DisplayOverallTOPCallback(Handle owner, Handle hndl, const char[
             int points = SQL_FetchInt(hndl, 2);
 
             //when uysing select it always return TRUE using SQL_HasResultSet() so I just compare the value of a column to an empty string for the first row returned
+            //if(SQL_GetRowCount(hndl) == 0)
             if(strcmp(szPlayerName, "") == 0){
                 CPrintToChat(client, "%t", "Overall_Challenge_LeaderBoard_Empty", g_szChatPrefix, g_szStyleMenuPrint[style]);
                 return;
             }
-            
-            //if (rank >= 10)
-            //    Format(szItem, sizeof(szItem), "[%i]     | %i pts   | %s", rank, points, szPlayerName);
-            //else
-            //    Format(szItem, sizeof(szItem), "[0%i]   | %i pts    | %s", rank, points, szPlayerName);
 
             if (rank < 10)
 			    Format(szRank, 16, "[0%i]  ", rank);
@@ -930,7 +886,6 @@ public int Menu_ChallengeTopHandler(Menu menu, MenuAction action, int param1, in
 	return 0;
 }
 
-//SHOW CHALLENGE LEADERBOARD
 public Action Challenge_Timeleft(int client, int args)
 {
     if(!IsValidClient(client))
