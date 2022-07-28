@@ -16,24 +16,43 @@ You can customize the map, style, duration of the callenge and points received.
 * [SurfTimer-Discord](https://github.com/surftimer/SurfTimer-discord) (*optional*)
 
 ## Showcase
+# Current Challenge info display
+![image](https://user-images.githubusercontent.com/70631212/180694878-e4dd13df-1167-4d30-b776-e7d54fb3d746.png)
+![image](https://user-images.githubusercontent.com/70631212/180694922-88967f02-ece8-49a7-a5e1-ff4891213250.png)
 
-# Challenge info display
-![image](https://user-images.githubusercontent.com/70631212/174004494-50fceb52-9c6f-4d9d-8338-a75c5e864028.png)
+# Current Challenge Leaderboard
+![image](https://user-images.githubusercontent.com/70631212/180695169-cec8d76d-6776-4bd2-b226-6df7ccdf4968.png)
 
-# Ongoing Challenge Top Players with times
-![image](https://user-images.githubusercontent.com/70631212/174004447-840e1c62-3551-4584-8843-80d618d7f24c.png)
+# Challenge Player Profiles
+![image](https://user-images.githubusercontent.com/70631212/180695226-55b0cba5-9e40-455c-82a6-ccda854fffdb.png)
 
-# Discord Notification When A new challenge is created
-![image](https://user-images.githubusercontent.com/70631212/180581059-6021cabf-eb82-4ebb-97e6-81e106ed8336.png)
+# Discord Integration 
+## Notification when a challenge is created
+![image](https://user-images.githubusercontent.com/70631212/180698128-4f3b07bf-f030-413d-ab06-81f10cba349d.png)
+
+## Notification when a challenge ends
+![image](https://user-images.githubusercontent.com/70631212/180698165-976e768e-eb35-4ff7-9b8d-395160ade415.png)
+
+## How To
+
+Command | Description | Usage
+:---|:---|:---:
+`sm_challenge` | Add new challenge | ```sm_add_challenge <mapname> <style> <top1_points> <duration>``` *duration is in days*
+`sm_end_challenge` | Ends the ongoing challenge |
+`sm_challenge` | Displays additional information of the ongoing challenge |
+`sm_mcp` | Displays the players profile |
+`sm_mctop` | Displays the overall challenge top players (TOP 50) |
+`sm_mcct` | Displays the ongoing challenge leaderboard (TOP 50) |
+`sm_mct` | Displays remaining time left of the current challenge |
 
 ## More Details
-To create a new challenge ```sm_add_challenge <mapname> <style> <top1_points> <duration (in days)>```.
-The plugin only allows 1 challenge occuring at the same time (for now idk).
-An admin can end the current challenge via cmd, which will also distribute the points accordingly.
-The point distribution is done automatically either when an admin uses the ```sm_end_challenge``` cmd OR when the duration of the challenge has reached the final date
+* The plugin only allows 1 challenge occuring at the same time (for now idk)
+* If there is a challenge on going, it will automatically stop if it reaches the `final date` OR if an admin uses `sm_end_challenge`
+* The point distribution is done automatically when a challenge ends
+* If there is a challenge on going all players ingame will be notified in which map it is
 
 ## Future Ideas
 * Discord Integration (Done)
 * Multiple Challenges (?)
 * Better point distribuition (?)
-* Add discord notification when the challenge has ended with the player who won
+* Add discord notification when the challenge has ended with the player who won (Done)
