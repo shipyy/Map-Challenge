@@ -48,6 +48,10 @@ public Action Create_Challenge(int client, int args)
                 return Plugin_Handled;
             }
         }
+        else {
+            CPrintToChat(client, "%t", "Add_Challenge_ERROR_Format", g_szChatPrefix);
+            return Plugin_Handled;
+        }
 
         char szpoints[32];
         GetCmdArg(3, szpoints, sizeof(szpoints));

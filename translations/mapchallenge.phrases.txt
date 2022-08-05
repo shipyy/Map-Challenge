@@ -28,7 +28,7 @@
     "Add_Challenge_ERROR_Format"
 	{
 		"#format"	"{1:s}"
-		"en"		"{blue}{1}{default} | {red}Wrong Format u should use sm_add_challenge <mapname> <style> <points> <duration>."
+		"en"		"{blue}{1}{default} | {red}Wrong Format u should use sm_add_challenge <mapname> #<style_acronym> <points> <duration>."
 	}
     "Map_Not_Valid"
 	{
@@ -63,6 +63,6 @@
 	"style_not_found"
 	{
 		"#format"	"{1:s}"
-		"en"		"{1} {red}Wrong style value, type {yellow}!acronyms{red} to see all the available styles"
+		"en"		"{blue}{1} | {red}Wrong style value, type {yellow}!acronyms{red} to see all the available styles"
 	}
 }

@@ -439,7 +439,8 @@ public void sql_TimesExistsCheckCallback(Handle owner, Handle hndl, const char[]
     
     // Found old time from database
 	if (SQL_HasResultSet(hndl) && SQL_FetchRow(hndl)){
-        if(SQL_FetchFloat(hndl, 0) >= runtime)
+        PrintToServer("HERE_001");
+        if(runtime <= SQL_FetchFloat(hndl, 0))
             db_UpdateTime(client, runtime, style);
     }
 	else{
@@ -449,13 +450,8 @@ public void sql_TimesExistsCheckCallback(Handle owner, Handle hndl, const char[]
 
 public void db_UpdateTime(int client, float runtime, int style)
 {
-    char szFromUnixTimeInitial[64];
-    char szFromUnixTimeFinal[64];
-    Format(szFromUnixTimeInitial, sizeof szFromUnixTimeInitial, "FROM_UNIXTIME(%f)", g_fChallenge_Initial_UNIX);
-    Format(szFromUnixTimeFinal, sizeof szFromUnixTimeFinal, "FROM_UNIXTIME(%f)", g_fChallenge_Final_UNIX);
-    
     char szQuery[255];
-    Format(szQuery, sizeof(szQuery), sql_UpdateRuntime, runtime, g_szSteamID[client], g_szMapName, style, szFromUnixTimeInitial, szFromUnixTimeFinal);
+    Format(szQuery, sizeof(szQuery), sql_UpdateRuntime, runtime, g_szSteamID[client], g_szMapName, style, g_sChallenge_InitialDate, g_sChallenge_FinalDate);
     SQL_TQuery(g_hDb, sql_UpdateTimesCallback, szQuery, DBPrio_Low);
 }
 
