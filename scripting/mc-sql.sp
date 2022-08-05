@@ -468,7 +468,6 @@ public void db_InsertTime(int client, float runtime, int style)
 
     char szQuery[255];
     Format(szQuery, sizeof(szQuery), sql_InsertRuntime, g_iChallenge_ID, g_szSteamID[client], szName, g_szMapName, runtime, style, szStart);
-    PrintToServer(szQuery);
     SQL_TQuery(g_hDb, sql_UpdateTimesCallback, szQuery, client, DBPrio_Low);
 }
 
@@ -777,8 +776,7 @@ public void sql_GetRemainingTimeCallback(Handle owner, Handle hndl, const char[]
 	if (SQL_HasResultSet(hndl) && SQL_FetchRow(hndl)){
 
         float timeleft = SQL_FetchFloat(hndl, 0);
-        PrintToServer("timeleft - %f", timeleft);
-
+        
         if(timeleft > 0.0){
             char sztimeleft[32];
             FormatTimeFloat(data, timeleft, sztimeleft, sizeof(sztimeleft));
