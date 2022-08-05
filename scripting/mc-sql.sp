@@ -105,7 +105,7 @@ public void sql_CheckChallengeActiveCallback(Handle owner, Handle hndl, const ch
                     g_bIsCurrentMapChallenge = true;
 
                 //TIMER THAT CHECKS REGULARLY IF THE TIME REMAINING OF CURRENT CHALLENGE HAS RUN OUT
-                CreateTimer(360.0, Check_Challenge_End, _, TIMER_FLAG_NO_MAPCHANGE | TIMER_REPEAT);
+                CreateTimer(360.0, Check_Challenge_End, INVALID_HANDLE, TIMER_FLAG_NO_MAPCHANGE | TIMER_REPEAT);
             }
         }
         else{
@@ -190,7 +190,7 @@ public void SQLTxn_AddChallenge_Success(Handle db, any data, int numQueries, Han
 {   
     g_bIsChallengeActive = true;
 
-    CreateTimer(360.0, Check_Challenge_End, _, TIMER_FLAG_NO_MAPCHANGE | TIMER_REPEAT);
+    CreateTimer(360.0, Check_Challenge_End, INVALID_HANDLE, TIMER_FLAG_NO_MAPCHANGE | TIMER_REPEAT);
 
     if (SQL_HasResultSet(results[1]) && SQL_FetchRow(results[1])) {
         g_fChallenge_Initial_UNIX = SQL_FetchFloat(results[1], 0);

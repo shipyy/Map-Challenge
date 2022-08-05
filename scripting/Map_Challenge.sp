@@ -81,13 +81,13 @@ public void OnPluginStart()
 
     Register_Forwards();
 
-}
-
-public void OnMapStart(){
-
     db_setupDatabase();
 
     CreateCMDS();
+
+}
+
+public void OnMapStart(){
 
     //CURRENT MAP NAME
     GetCurrentMap(g_szMapName, sizeof(g_szMapName));
