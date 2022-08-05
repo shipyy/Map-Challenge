@@ -72,13 +72,16 @@ stock bool IsValidClient(int client)
     return false;
 }
 
-public void ResetDefaults(){
-    g_bIsChallengeActive = false;
-    g_bIsCurrentMapChallenge = false;
-
-    g_fChallenge_Initial_UNIX = 0.0;
-    g_fChallenge_Final_UNIX = 0.0;
-    g_iChallenge_Style = 0;
-    g_sChallenge_MapName = "";
-    //g_fChallenge_Duration = 0.0;
+public void ResetDefaults()
+{
+	g_bIsChallengeActive = false;
+	g_bIsCurrentMapChallenge = false;
+	
+	g_fChallenge_Initial_UNIX = 0.0;
+	g_fChallenge_Final_UNIX = 0.0;
+	g_sChallenge_InitialDate = "";
+	g_sChallenge_FinalDate = "";
+	g_iChallenge_Style = 0;
+	g_sChallenge_MapName = "";
+	//g_fChallenge_Duration = 0.0;
 }

@@ -2,7 +2,7 @@
 //CK_CHALLENGES
 /////
 char sql_CreateChallenges[] = "CREATE TABLE IF NOT EXISTS ck_challenges (id INT NOT NULL AUTO_INCREMENT, mapname VARCHAR(32), StartDate TIMESTAMP(6), EndDate TIMESTAMP(6), style INT(12) NOT NULL DEFAULT '0', points INT(12) NOT NULL DEFAULT '0', active INT(12) NOT NULL DEFAULT '0', PRIMARY KEY(id)) DEFAULT CHARSET=utf8mb4;";
-char sql_CheckActiveChallenge[] = "SELECT id, active, mapname, points, UNIX_TIMESTAMP(StartDate), UNIX_TIMESTAMP(EndDate), UNIX_TIMESTAMP(EndDate) - UNIX_TIMESTAMP(CURRENT_TIMESTAMP(6)) as Time_Diff FROM ck_challenges ORDER BY id DESC LIMIT 1;"
+char sql_CheckActiveChallenge[] = "SELECT id, active, mapname, points, StartDate, EndDate, UNIX_TIMESTAMP(StartDate), UNIX_TIMESTAMP(EndDate), UNIX_TIMESTAMP(EndDate) - UNIX_TIMESTAMP(CURRENT_TIMESTAMP(6)) as Time_Diff FROM ck_challenges ORDER BY id DESC LIMIT 1;"
 char sql_InsertChallenge[] = "INSERT INTO ck_challenges (mapname, StartDate, EndDate, style, points, active) VALUES ('%s', %s, %s, '%i', '%i', '%i');"
 char sql_EndChallenge[] = "UPDATE ck_challenges SET active = 0 WHERE id = '%i';"
 char sql_RemainingTime[] = "SELECT UNIX_TIMESTAMP(EndDate) - UNIX_TIMESTAMP(CURRENT_TIMESTAMP(6)) as Time_Diff FROM ck_challenges WHERE id = '%i';"
@@ -32,4 +32,5 @@ char sql_SelectPlayerWithStyle[] = "SELECT * FROM ck_challenge_players WHERE ste
 //CK_FINISHED_CHALLENGES
 /////
 char sql_CreateFinished_Challenges[] = "CREATE TABLE IF NOT EXISTS ck_finished_challenges (id INT(12) NOT NULL, winner VARCHAR(32), nr_participants INT(12) NOT NULL DEFAULT '0', mapname VARCHAR(32), style INT(12) NOT NULL DEFAULT '0', points INT(12) NOT NULL DEFAULT '0', StartDate TIMESTAMP(6), EndDate TIMESTAMP(6), PRIMARY KEY(id)) DEFAULT CHARSET=utf8mb4;";
-char sql_InsertFinishedChallenge[] = "INSERT INTO ck_finished_challenges (id, winner, nr_participants, mapname, style, points, StartDate, EndDate) VALUES ('%i', '%s', '%i', '%s', '%i', '%i', '%s', '%s');"
+char sql_InsertFinishedChallenge_WithWinner[] = "INSERT INTO ck_finished_challenges (id, winner, nr_participants, mapname, style, points, StartDate, EndDate) VALUES ('%i', '%s', '%i', '%s', '%i', '%i', '%s', '%s');"
+char sql_InsertFinishedChallenge_NoWinner[] = "INSERT INTO ck_finished_challenges (id, nr_participants, mapname, style, points, StartDate, EndDate) VALUES ('%i', '%i', '%s', '%i', '%i', '%s', '%s');"

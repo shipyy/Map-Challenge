@@ -24,6 +24,8 @@ bool g_bIsCurrentMapChallenge = false;
 
 float g_fChallenge_Initial_UNIX;
 float g_fChallenge_Final_UNIX;
+char g_sChallenge_InitialDate[64];
+char g_sChallenge_FinalDate[64];
 //float g_fChallenge_Duration;
 int g_iChallenge_Points;
 int g_iChallenge_Style;

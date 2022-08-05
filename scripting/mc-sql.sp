@@ -85,11 +85,14 @@ public void sql_CheckChallengeActiveCallback(Handle owner, Handle hndl, const ch
         if(SQL_FetchInt(hndl, 1) == 1){
             SQL_FetchString(hndl, 2, g_sChallenge_MapName, sizeof(g_sChallenge_MapName));
 
-            g_fChallenge_Initial_UNIX = SQL_FetchFloat(hndl, 4);
-            g_fChallenge_Final_UNIX = SQL_FetchFloat(hndl, 5);
+            SQL_FetchString(hndl, 4, g_sChallenge_InitialDate, sizeof(g_sChallenge_InitialDate));
+            SQL_FetchString(hndl, 5, g_sChallenge_FinalDate, sizeof(g_sChallenge_FinalDate));
+
+            g_fChallenge_Initial_UNIX = SQL_FetchFloat(hndl, 6);
+            g_fChallenge_Final_UNIX = SQL_FetchFloat(hndl, 7);
 
             //CHECK IF CURRENT TIME STAMP IS NEWER THAN HE END_DATE OF THE CURRENT CHALLENGE
-            float time_diff = SQL_FetchFloat(hndl, 6);
+            float time_diff = SQL_FetchFloat(hndl, 8);
             g_iChallenge_Points = SQL_FetchInt(hndl, 3);
 
             g_iChallenge_ID = SQL_FetchInt(hndl, 0);
@@ -181,7 +184,7 @@ public void db_AddChallenge(int client, char szMapName[32], int style, int point
 
     Transaction add_challange_transactions = SQL_CreateTransaction();
     SQL_AddQuery(add_challange_transactions, szQuery_Insert);
-    SQL_AddQuery(add_challange_transactions, "SELECT UNIX_TIMESTAMP(StartDate), UNIX_TIMESTAMP(EndDate), mapname, points, style, id FROM ck_challenges ORDER BY id DESC LIMIT 1;");
+    SQL_AddQuery(add_challange_transactions, "SELECT StartDate, EndDate, UNIX_TIMESTAMP(StartDate), UNIX_TIMESTAMP(EndDate), mapname, points, style, id FROM ck_challenges ORDER BY id DESC LIMIT 1;");
 
     SQL_ExecuteTransaction(g_hDb, add_challange_transactions, SQLTxn_AddChallenge_Success , SQLTxn_AddChallenge_Failed, client);
 }
@@ -193,15 +196,18 @@ public void SQLTxn_AddChallenge_Success(Handle db, any data, int numQueries, Han
     CreateTimer(360.0, Check_Challenge_End, INVALID_HANDLE, TIMER_FLAG_NO_MAPCHANGE | TIMER_REPEAT);
 
     if (SQL_HasResultSet(results[1]) && SQL_FetchRow(results[1])) {
-        g_fChallenge_Initial_UNIX = SQL_FetchFloat(results[1], 0);
-        g_fChallenge_Final_UNIX = SQL_FetchFloat(results[1], 1);
-        
-        SQL_FetchString(results[1], 2, g_sChallenge_MapName, sizeof g_sChallenge_MapName);
+        SQL_FetchString(results[1], 0, g_sChallenge_InitialDate, sizeof(g_sChallenge_InitialDate));
+        SQL_FetchString(results[1], 1, g_sChallenge_FinalDate, sizeof(g_sChallenge_FinalDate));
 
-        g_iChallenge_Points = SQL_FetchInt(results[1], 3);
-        g_iChallenge_Style = SQL_FetchInt(results[1], 4);
+        g_fChallenge_Initial_UNIX = SQL_FetchFloat(results[1], 2);
+        g_fChallenge_Final_UNIX = SQL_FetchFloat(results[1], 3);
 
-        g_iChallenge_ID = SQL_FetchInt(results[1], 5);
+        SQL_FetchString(results[1], 4, g_sChallenge_MapName, sizeof g_sChallenge_MapName);
+
+        g_iChallenge_Points = SQL_FetchInt(results[1], 5);
+        g_iChallenge_Style = SQL_FetchInt(results[1], 6);
+
+        g_iChallenge_ID = SQL_FetchInt(results[1], 7);
 
         CPrintToChatAll("%t", "Challenge_Added", g_szChatPrefix, g_sChallenge_MapName);
     }
@@ -261,6 +267,7 @@ public void sql_DistributePointsCallback(Handle owner, Handle hndl, const char[]
 
         if(SQL_GetRowCount(hndl) <= 0){
             SendChallengeEndForward(client, szTop5, 0);
+            db_AddFinishedChallenge(client, "", 0);
             ResetDefaults();
             return;
         }
@@ -317,14 +324,12 @@ public void AddChallengePoints(char szSteamID[32], int style, int points_to_add)
 /////
 public void db_AddFinishedChallenge(int client, char szWinner[32], int nr_participants)
 {
-    char szInitialTimeFormatted[32];
-    FormatTime(szInitialTimeFormatted, sizeof(szInitialTimeFormatted), "%c", RoundToZero(g_fChallenge_Initial_UNIX));
-
-    char szFinalTimeFormatted[32];
-    FormatTime(szFinalTimeFormatted, sizeof(szFinalTimeFormatted), "%c", RoundToZero(g_fChallenge_Final_UNIX));
 
     char szQuery[1024];
-    Format(szQuery, sizeof(szQuery), sql_InsertFinishedChallenge, g_iChallenge_ID, szWinner, nr_participants, g_sChallenge_MapName, g_iChallenge_Style, g_iChallenge_Points, szInitialTimeFormatted, szFinalTimeFormatted);
+    if (nr_participants != 0)
+        Format(szQuery, sizeof szQuery, sql_InsertFinishedChallenge_WithWinner, g_iChallenge_ID, szWinner, nr_participants, g_sChallenge_MapName, g_iChallenge_Style, g_iChallenge_Points, g_sChallenge_InitialDate, g_sChallenge_FinalDate);
+    else
+        Format(szQuery, sizeof szQuery, sql_InsertFinishedChallenge_NoWinner, g_iChallenge_ID, nr_participants, g_sChallenge_MapName, g_iChallenge_Style, g_iChallenge_Points, g_sChallenge_InitialDate, g_sChallenge_FinalDate);
     SQL_TQuery(g_hDb, SQL_CheckCallback, szQuery, DBPrio_Low); 
 }
 
@@ -412,15 +417,9 @@ public void db_TimesExistsCheck(int client, float runtime, int style)
     WritePackCell(pack, client);
     WritePackFloat(pack, runtime);
     WritePackCell(pack, style);
-
-	//FORMAT UNIX TIMESTAMPS TO THE FORMAT USED IN THE DATABASE
-    char szFromUnixTimeInitial[64];
-    char szFromUnixTimeFinal[64];
-    Format(szFromUnixTimeInitial, sizeof szFromUnixTimeInitial, "FROM_UNIXTIME(%f)", g_fChallenge_Initial_UNIX);
-    Format(szFromUnixTimeFinal, sizeof szFromUnixTimeFinal, "FROM_UNIXTIME(%f)", g_fChallenge_Final_UNIX);
     
     char szQuery[255];
-    Format(szQuery, sizeof(szQuery), sql_CheckRuntimeExists, g_szSteamID[client], g_szMapName, style, szFromUnixTimeInitial, szFromUnixTimeFinal);
+    Format(szQuery, sizeof(szQuery), sql_CheckRuntimeExists, g_szSteamID[client], g_szMapName, style, g_sChallenge_InitialDate, g_sChallenge_FinalDate);
     SQL_TQuery(g_hDb, sql_TimesExistsCheckCallback, szQuery, pack, DBPrio_Low);
 }
 
