@@ -9,6 +9,12 @@ You can customize the map, style, duration of the callenge and points received.
 
 * Download Release Files and simply drag and drop onto your csgo folder
 
+`csgo/addons/sourcemod/plugins/Map_Challenge.smx`
+
+`csgo/addons/sourcemod/scripting/include/map-challenge.inc`
+
+`csgo/addons/sourcemod/translations/mapchallenge.phrases.txt`
+
 ## Requirements
 
 **Plugins**
