@@ -439,7 +439,6 @@ public void sql_TimesExistsCheckCallback(Handle owner, Handle hndl, const char[]
     
     // Found old time from database
 	if (SQL_HasResultSet(hndl) && SQL_FetchRow(hndl)){
-        PrintToServer("HERE_001");
         if(runtime <= SQL_FetchFloat(hndl, 0))
             db_UpdateTime(client, runtime, style);
     }
@@ -457,16 +456,20 @@ public void db_UpdateTime(int client, float runtime, int style)
 
 public void db_InsertTime(int client, float runtime, int style)
 {
-	char szUName[MAX_NAME_LENGTH];
-	GetClientName(client, szUName, MAX_NAME_LENGTH);
+    char szUName[MAX_NAME_LENGTH];
+    GetClientName(client, szUName, MAX_NAME_LENGTH);
 
 	//ESCAPE NAME STRING
-	char szName[MAX_NAME_LENGTH * 2 + 1];
-	SQL_EscapeString(g_hDb, szUName, szName, MAX_NAME_LENGTH * 2 + 1);
+    char szName[MAX_NAME_LENGTH * 2 + 1];
+    SQL_EscapeString(g_hDb, szUName, szName, MAX_NAME_LENGTH * 2 + 1);
+    
+    char szStart[512];
+    Format(szStart, sizeof szStart, "CURRENT_TIMESTAMP(6)");
 
-	char szQuery[255];
-	Format(szQuery, sizeof(szQuery), sql_InsertRuntime, g_iChallenge_ID, g_szSteamID[client], szName, g_szMapName, runtime, style);
-	SQL_TQuery(g_hDb, sql_UpdateTimesCallback, szQuery, client, DBPrio_Low);
+    char szQuery[255];
+    Format(szQuery, sizeof(szQuery), sql_InsertRuntime, g_iChallenge_ID, g_szSteamID[client], szName, g_szMapName, runtime, style, szStart);
+    PrintToServer(szQuery);
+    SQL_TQuery(g_hDb, sql_UpdateTimesCallback, szQuery, client, DBPrio_Low);
 }
 
 public void sql_UpdateTimesCallback(Handle owner, Handle hndl, const char[] error, any data)
