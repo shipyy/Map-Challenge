@@ -31,6 +31,24 @@ public Action Create_Challenge(int client, int args)
         GetCmdArg(2, szstyle, sizeof(szstyle));
         int style = StringToInt(szstyle);
 
+        if (szstyle[0] == '#') {
+            ReplaceString(szstyle, sizeof szstyle, "#", "", false);
+
+            ArrayList styles = new ArrayList(32);
+
+            for (int j = 0; j < MAX_STYLES; j++) {
+                styles.PushString(g_szStyleAcronyms[j]);
+            }
+
+            style = styles.FindString(szstyle);
+            delete styles;
+
+            if ( style == -1 ) {
+                CPrintToChat(client, "%t", "style_not_found", g_szChatPrefix);
+                return Plugin_Handled;
+            }
+        }
+
         char szpoints[32];
         GetCmdArg(3, szpoints, sizeof(szpoints));
         int points = StringToInt(szpoints);

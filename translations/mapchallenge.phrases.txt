@@ -60,4 +60,9 @@
 		"#format"	"{1:s},{2:s}"
 		"en"		"{blue}{1}{default} | There is a map challenge ongoing in {red}{2}{default}"
 	}
+	"style_not_found"
+	{
+		"#format"	"{1:s}"
+		"en"		"{1} {red}Wrong style value, type {yellow}!acronyms{red} to see all the available styles"
+	}
 }

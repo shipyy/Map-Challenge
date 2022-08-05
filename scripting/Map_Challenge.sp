@@ -46,6 +46,18 @@ char g_szStyleMenuPrint[][] =
 	"Freestyle"
 };
 
+char g_szStyleAcronyms[][] =
+{
+	"n",
+	"sw",
+	"hsw",
+	"bw",
+	"lg",
+	"sm",
+	"ff",
+	"fs"
+};
+
 // Client's steamID
 char g_szSteamID[MAXPLAYERS + 1][32];
 
