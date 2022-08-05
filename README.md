@@ -43,7 +43,7 @@ You can customize the map, style, duration of the callenge and points received.
 
 Command | Description | Usage
 :---|:---|:---:
-`sm_challenge` | Add new challenge | ```sm_add_challenge <mapname> <style> <top1_points> <duration>``` *duration is in days*
+`sm_add_challenge` | Add new challenge | ```sm_add_challenge <mapname> <style> <top1_points> <duration>``` *duration is in days*
 `sm_end_challenge` | Ends the ongoing challenge |
 `sm_challenge` | Displays additional information of the ongoing challenge |
 `sm_mcp` | Displays the players profile |
