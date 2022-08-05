@@ -31,10 +31,11 @@ void SendNewChallengeForward(int client)
     Call_PushCell(g_iChallenge_Points);
     
     char szInitialTimeFormatted[32];
-    FormatTime(szInitialTimeFormatted, sizeof(szInitialTimeFormatted), "%c", g_iChallenge_Initial_TimeStamp);
+    FormatTime(szInitialTimeFormatted, sizeof(szInitialTimeFormatted), "%c", RoundToZero(g_fChallenge_Initial_UNIX));
 
     char szFinalTimeFormatted[32];
-    FormatTime(szFinalTimeFormatted, sizeof(szFinalTimeFormatted), "%c", g_iChallenge_Final_TimeStamp);
+    FormatTime(szFinalTimeFormatted, sizeof(szFinalTimeFormatted), "%c", RoundToZero(g_fChallenge_Final_UNIX));
+
 
     Call_PushString(szInitialTimeFormatted);
     Call_PushString(szFinalTimeFormatted);
@@ -64,10 +65,10 @@ void SendChallengeEndForward(int client, ArrayList szChallengeTop5, int totalpar
     Call_PushCell(g_iChallenge_Points);
     
     char szInitialTimeFormatted[32];
-    FormatTime(szInitialTimeFormatted, sizeof(szInitialTimeFormatted), "%c", g_iChallenge_Initial_TimeStamp);
+    FormatTime(szInitialTimeFormatted, sizeof(szInitialTimeFormatted), "%c", RoundToZero(g_fChallenge_Initial_UNIX));
 
     char szFinalTimeFormatted[32];
-    FormatTime(szFinalTimeFormatted, sizeof(szFinalTimeFormatted), "%c", g_iChallenge_Final_TimeStamp);
+    FormatTime(szFinalTimeFormatted, sizeof(szFinalTimeFormatted), "%c", RoundToZero(g_fChallenge_Final_UNIX));
 
     Call_PushString(szInitialTimeFormatted);
     Call_PushString(szFinalTimeFormatted);
