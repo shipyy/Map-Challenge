@@ -180,7 +180,7 @@ public void db_AddChallenge(int client, char szMapName[32], int style, int point
     Format(szStart, sizeof szStart, "CURRENT_TIMESTAMP(6)");
     Format(szEnd, sizeof szStart, "CURRENT_TIMESTAMP(6) + INTERVAL %i DAY + INTERVAL %i HOUR", days, hours);
 
-    Format(szQuery_Insert, sizeof(szQuery_Insert), sql_InsertChallenge, szMapName, szStart, szEnd, g_iChallenge_Style, g_iChallenge_Points, 1);
+    Format(szQuery_Insert, sizeof(szQuery_Insert), sql_InsertChallenge, szMapName, szStart, szEnd, style, points, 1);
 
     Transaction add_challange_transactions = SQL_CreateTransaction();
     SQL_AddQuery(add_challange_transactions, szQuery_Insert);
