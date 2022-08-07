@@ -269,6 +269,7 @@ public void sql_DistributePointsCallback(Handle owner, Handle hndl, const char[]
             SendChallengeEndForward(client, szTop5, 0);
             db_AddFinishedChallenge(client, "", 0);
             ResetDefaults();
+            CPrintToChatAll("%t", "Challenge_Ended", g_szChatPrefix, 0);
             return;
         }
 
@@ -307,6 +308,7 @@ public void sql_DistributePointsCallback(Handle owner, Handle hndl, const char[]
         }
 
         CPrintToChatAll("%t", "Challenge_Points_Distributed", g_szChatPrefix);
+        CPrintToChatAll("%t", "Challenge_Ended", g_szChatPrefix, nr_players);
     }
 
     ResetDefaults();

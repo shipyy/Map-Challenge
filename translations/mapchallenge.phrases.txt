@@ -17,8 +17,8 @@
 	}
     "Challenge_Ended"
 	{
-		"#format"	"{1:s}"
-		"en"		"{blue}{1}{default} | {red}Ongoing Challenge has ended."
+		"#format"	"{1:s},{2:i}"
+		"en"		"{blue}{1} | {red}Challenge Ended with {yellow}{2}{red} Participants"
 	}
     "Challenge_Timeleft"
 	{
