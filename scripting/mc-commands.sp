@@ -41,12 +41,13 @@ public Action Create_Challenge(int client, int args)
             }
 
             style = styles.FindString(szstyle);
-            delete styles;
 
             if ( style == -1 ) {
                 CPrintToChat(client, "%t", "style_not_found", g_szChatPrefix);
                 return Plugin_Handled;
             }
+
+            delete styles;
         }
         else {
             CPrintToChat(client, "%t", "Add_Challenge_ERROR_Format", g_szChatPrefix);
