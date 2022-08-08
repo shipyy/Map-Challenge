@@ -72,6 +72,14 @@ GlobalForward g_NewChallengeForward;
 GlobalForward g_ChallengeEndForward;
 
 /////
+//ENUMS
+/////
+enum struct TOP5_entry{
+	char szPlayerName[MAX_NAME_LENGTH];
+	char szRuntimeFormatted[32];
+	char szRuntimeDifference[32];
+}
+/////
 //INCLUDES
 /////
 #include <surftimer>

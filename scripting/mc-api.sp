@@ -74,8 +74,10 @@ void SendChallengeEndForward(int client, ArrayList szChallengeTop5, int totalpar
     Call_PushString(szFinalTimeFormatted);
 
     if(szChallengeTop5.Length != 5){
-        for(int i = szChallengeTop5.Length; i <5; i++)
-            szChallengeTop5.PushString("");
+        for(int i = szChallengeTop5.Length; i <5; i++){
+            TOP5_entry temp;
+            szChallengeTop5.PushArray(temp, sizeof TOP5_entry);
+        }
     }
     Call_PushCell(szChallengeTop5);
 

@@ -263,7 +263,7 @@ public void sql_DistributePointsCallback(Handle owner, Handle hndl, const char[]
 	}
 
     if (SQL_HasResultSet(hndl)) {
-        ArrayList szTop5 = new ArrayList(32);
+        ArrayList szTop5 = new ArrayList(sizeof TOP5_entry);
 
         if(SQL_GetRowCount(hndl) <= 0){
             SendChallengeEndForward(client, szTop5, 0);
@@ -276,6 +276,7 @@ public void sql_DistributePointsCallback(Handle owner, Handle hndl, const char[]
         int nr_players = SQL_GetRowCount(hndl);
 
         int rank = 1;
+        float winner_runtime;
         char szPlayerSteamID[32];
         int style;
         int points_to_add;
@@ -286,6 +287,7 @@ public void sql_DistributePointsCallback(Handle owner, Handle hndl, const char[]
 
             if(rank == 1){
                 points_to_add = g_iChallenge_Points;
+                winner_runtime = SQL_FetchFloat(hndl, 4);
                 db_AddFinishedChallenge(client, szPlayerSteamID, nr_players);
             }
             else if(1 < rank <= 10)
@@ -296,9 +298,21 @@ public void sql_DistributePointsCallback(Handle owner, Handle hndl, const char[]
             AddChallengePoints(szPlayerSteamID, style, points_to_add);
 
             if (rank <= 5) {
-                char sztemp[32];
-                SQL_FetchString(hndl, 2, sztemp, sizeof(sztemp));
-                szTop5.PushString(sztemp);
+                TOP5_entry temp;
+
+                SQL_FetchString(hndl, 2, temp.szPlayerName, sizeof(temp.szPlayerName));
+
+                float temp_runtime;
+                temp_runtime = SQL_FetchFloat(hndl, 4);
+                FormatTimeFloat(client, temp_runtime, temp.szRuntimeFormatted, sizeof temp.szRuntimeFormatted, true);
+
+                float runtime_difference;
+                runtime_difference = winner_runtime - temp_runtime;
+                FormatTimeFloat(client, runtime_difference * -1.0, temp.szRuntimeDifference, sizeof temp.szRuntimeDifference, true);
+
+                szTop5.PushArray(temp, sizeof(temp));
+
+                PrintToServer("\n\ntemp.szRuntimeDifference - %s\n\n", temp.szRuntimeDifference);
             }
 
             if(rank == nr_players)
@@ -691,24 +705,24 @@ public void sql_SelectCurrentChallengeTopCallback(Handle owner, Handle hndl, con
             float player_runtime = SQL_FetchFloat(hndl, 1);
             char szFormattedRuntime[64];
             char szFormattedDifference[64];
-            FormatTimeFloat(client, player_runtime, szFormattedRuntime, sizeof(szFormattedRuntime));
+            FormatTimeFloat(client, player_runtime, szFormattedRuntime, sizeof(szFormattedRuntime), true);
 
             style = SQL_FetchInt(hndl, 2);
 
             switch(style){
-                case 0: Format(szItem, sizeof(szItem), "[0%i]   | %s | (+00:00:00) | %s", rank, szFormattedRuntime, szPlayerName);
+                case 0: Format(szItem, sizeof(szItem), "[0%i]   | %s | (+00:00:000) | %s", rank, szFormattedRuntime, szPlayerName);
             }
 
         
             if(rank == 1){
-                Format(szItem, sizeof(szItem), "[0%i]   | %s | (+00:00:00) | %s", rank, szFormattedRuntime, szPlayerName);
+                Format(szItem, sizeof(szItem), "[0%i]   | %s | (+00:00:000) | %s", rank, szFormattedRuntime, szPlayerName);
                 rank_1_time = player_runtime;
             }
             else{
-                FormatTimeFloat(client, player_runtime, szFormattedRuntime, sizeof(szFormattedRuntime));
-
+                FormatTimeFloat(client, player_runtime, szFormattedRuntime, sizeof(szFormattedRuntime), true);
+                
                 runtime_difference = rank_1_time - player_runtime;
-                FormatTimeFloat(client, runtime_difference, szFormattedDifference, sizeof(szFormattedDifference));
+                FormatTimeFloat(client, runtime_difference * -1.0, szFormattedDifference, sizeof(szFormattedDifference), true);
                 
 
                 if (rank >= 10)
@@ -728,7 +742,7 @@ public void sql_SelectCurrentChallengeTopCallback(Handle owner, Handle hndl, con
         }
 
 
-        menu.SetTitle("Map Challenge TOP for %s | %s \n    Rank   Time           Difference         Player\n", g_sChallenge_MapName, g_szStyleMenuPrint[style]);
+        menu.SetTitle("Map Challenge TOP for %s | %s \n    Rank   Time            Difference          Player\n", g_sChallenge_MapName, g_szStyleMenuPrint[style]);
 
         SetMenuPagination(menu, 5);
         SetMenuExitButton(menu, true);
@@ -781,7 +795,7 @@ public void sql_GetRemainingTimeCallback(Handle owner, Handle hndl, const char[]
         
         if(timeleft > 0.0){
             char sztimeleft[32];
-            FormatTimeFloat(data, timeleft, sztimeleft, sizeof(sztimeleft));
+            FormatTimeFloat(data, timeleft, sztimeleft, sizeof(sztimeleft), false);
 
             CPrintToChat(data, "%t", "Challenge_Timeleft", g_szChatPrefix, sztimeleft);
         }
@@ -816,7 +830,7 @@ public void sql_Check_Challenge_EndCallback(Handle owner, Handle hndl, const cha
             db_EndCurrentChallenge(0, g_iChallenge_ID);
         }
         else{
-            FormatTimeFloat(data, time_diff, sztimeleft, sizeof(sztimeleft));
+            FormatTimeFloat(data, time_diff, sztimeleft, sizeof(sztimeleft), false);
 
             for(int i = 1; i <= MaxClients; i++)
             {
@@ -915,7 +929,7 @@ public void SQL_Challenge_InfoCallback(Handle owner, Handle hndl, const char[] e
         AddMenuItem(Challenge_Info_Menu, "", szItem, ITEMDRAW_DISABLED);
 
         char sztimeleft[64];
-        FormatTimeFloat(data, timeleft, sztimeleft, sizeof(sztimeleft));
+        FormatTimeFloat(data, timeleft, sztimeleft, sizeof(sztimeleft), false);
         Format(szItem, sizeof(szItem), "TimeLeft : %s", sztimeleft);
         AddMenuItem(Challenge_Info_Menu, "", szItem, ITEMDRAW_DISABLED);
 

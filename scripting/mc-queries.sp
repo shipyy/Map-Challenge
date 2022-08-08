@@ -12,7 +12,7 @@ char sql_ChallengeInfo[] = "SELECT id, mapname, StartDate, EndDate, points, styl
 //CK_CHALLENGE_TIMES
 /////
 char sql_CreateChallenges_Times[] = "CREATE TABLE IF NOT EXISTS ck_challenge_times (id INT(12) NOT NULL, steamid VARCHAR(32), name VARCHAR(32), mapname VARCHAR(32), runtime decimal(12, 6) NOT NULL DEFAULT '0.000000', style INT(12) NOT NULL DEFAULT '0', Run_Date TIMESTAMP(6)  ON UPDATE CURRENT_TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), PRIMARY KEY(id, steamid, mapname, runtime)) DEFAULT CHARSET=utf8mb4;";
-char sql_SelectParticipants[] = "SELECT steamid, style, name, mapname FROM ck_challenge_times WHERE id = '%i' ORDER BY runtime ASC;"
+char sql_SelectParticipants[] = "SELECT steamid, style, name, mapname, runtime FROM ck_challenge_times WHERE id = '%i' ORDER BY runtime ASC;"
 char sql_InsertRuntime[] = "INSERT INTO ck_challenge_times (id, steamid, name, mapname, runtime, style, Run_Date) VALUES ('%i', '%s', '%s', '%s', '%f', '%i', %s);"
 char sql_UpdateRuntime[] = "UPDATE ck_challenge_times SET runtime = '%f' WHERE steamid = '%s' AND mapname = '%s' AND runtime > -1.0 AND style = %i AND Run_Date BETWEEN '%s' AND '%s';"
 char sql_CheckRuntimeExists[] = "SELECT runtime FROM ck_challenge_times WHERE steamid = '%s' AND mapname = '%s' AND runtime > -1.0 AND style = %i AND Run_Date BETWEEN '%s' AND '%s';"

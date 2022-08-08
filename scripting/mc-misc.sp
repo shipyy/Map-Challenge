@@ -1,4 +1,4 @@
-public void FormatTimeFloat(int client, float time, char[] string, int length)
+public void FormatTimeFloat(int client, float time, char[] string, int length, bool runtime)
 {
 	char szDays[16];
 	char szHours[16];
@@ -51,15 +51,25 @@ public void FormatTimeFloat(int client, float time, char[] string, int length)
 	else
 		Format(szDays, 16, "%d", days);
 
-	if (days > 0) {
-		Format(string, length, "%sd %sh %sm %ss %sms", szDays, szHours, szMinutes, szSeconds, szMS);
+	if (!runtime) {
+		if (days > 0) {
+			Format(string, length, "%sd %sh %sm %ss %sms", szDays, szHours, szMinutes, szSeconds, szMS);
+		}
+		else {
+			if (hours > 0) {
+				Format(string, length, "%sh %sm %ss %sms", szHours, szMinutes, szSeconds, szMS);
+			}
+			else {
+				Format(string, length, "%sm %ss %sms", szMinutes, szSeconds, szMS);
+			}
+		}
 	}
 	else {
 		if (hours > 0) {
-			Format(string, length, "%sh %sm %ss %sms", szHours, szMinutes, szSeconds, szMS);
+			Format(string, length, "%s:%s:%s.%s", szHours, szMinutes, szSeconds, szMS);
 		}
 		else {
-			Format(string, length, "%sm %ss %sms", szMinutes, szSeconds, szMS);
+			Format(string, length, "%s:%s.%s", szMinutes, szSeconds, szMS);
 		}
 	}
 
