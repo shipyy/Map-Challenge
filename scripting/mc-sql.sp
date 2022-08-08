@@ -311,8 +311,6 @@ public void sql_DistributePointsCallback(Handle owner, Handle hndl, const char[]
                 FormatTimeFloat(client, runtime_difference * -1.0, temp.szRuntimeDifference, sizeof temp.szRuntimeDifference, true);
 
                 szTop5.PushArray(temp, sizeof(temp));
-
-                PrintToServer("\n\ntemp.szRuntimeDifference - %s\n\n", temp.szRuntimeDifference);
             }
 
             if(rank == nr_players)
@@ -772,7 +770,6 @@ public void db_GetRemainingTime(int client){
     if(g_bIsChallengeActive){
         char szQuery[255];
         Format(szQuery, sizeof(szQuery), sql_RemainingTime, g_iChallenge_ID);
-        PrintToServer(szQuery);
         SQL_TQuery(g_hDb, sql_GetRemainingTimeCallback, szQuery, client, DBPrio_Low);
     }
     else{

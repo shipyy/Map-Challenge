@@ -84,7 +84,7 @@ enum struct TOP5_entry{
 /////
 #include <surftimer>
 #include <colorlib>
-#include <map-challenge>
+#include <mapchallenge>
 #include "mc-queries.sp"
 #include "mc-sql.sp"
 #include "mc-misc.sp"
