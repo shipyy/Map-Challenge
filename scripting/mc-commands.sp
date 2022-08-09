@@ -95,14 +95,16 @@ public Action ChallengeProfile(int client, int args)
 {
     if(!IsValidClient(client))
         return Plugin_Handled;
-
-    char szSteamID[32];
-    Format(szSteamID, sizeof(szSteamID), "");
     
-    if(args > 0)
-        GetCmdArg(0, szSteamID, sizeof(szSteamID));
-
-    ProfileMenu(client, szSteamID);
+    if(args > 0) {
+        char szPlayerName[MAX_NAME_LENGTH];
+        GetCmdArg(1, szPlayerName, sizeof szPlayerName);
+        db_GetPlayerSteamdID(client, szPlayerName);
+    }
+    else
+    {
+        ProfileMenu(client, "");
+    }
 
     return Plugin_Handled;
 

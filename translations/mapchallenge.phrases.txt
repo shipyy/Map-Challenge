@@ -18,12 +18,12 @@
     "Challenge_Ended"
 	{
 		"#format"	"{1:s},{2:i}"
-		"en"		"{blue}{1} | {red}Challenge Ended with {yellow}{2}{red} Participants"
+		"en"		"{blue}{1}{default} | {red}Challenge Ended with {yellow}{2}{red} Participants."
 	}
     "Challenge_Timeleft"
 	{
 		"#format"	"{1:s},{2:s}"
-		"en"		"{blue}{1}{default} | Timeleft : {yellow}{2}"
+		"en"		"{blue}{1}{default} | Timeleft : {yellow}{2}."
 	}
     "Add_Challenge_ERROR_Format"
 	{
@@ -58,16 +58,21 @@
 	"Challenge_Ongoing"
 	{
 		"#format"	"{1:s},{2:s}"
-		"en"		"{blue}{1}{default} | There is a map challenge ongoing in {red}{2}{default}"
+		"en"		"{blue}{1}{default} | There is a map challenge ongoing in {red}{2}{default}."
 	}
 	"style_not_found"
 	{
 		"#format"	"{1:s}"
-		"en"		"{blue}{1} | {red}Wrong style value, type {yellow}!acronyms{red} to see all the available styles"
+		"en"		"{blue}{1}{default} | {red}Wrong style value, type {yellow}!acronyms{red} to see all the available styles."
 	}
 	"player_data_not_found"
 	{
 		"#format"	"{1:s},{2:s}"
-		"en"		"{blue}{1} | {red}There is no player data available for {yellow}{2}"
+		"en"		"{blue}{1}{default} | {red}There is no player data available for {yellow}{2}."
+	}
+	"player_not_found"
+	{
+		"#format"	"{1:s},{2:s}"
+		"en"		"{blue}{1}{default} | {red}Player {yellow}{2}{red} not found."
 	}
 }

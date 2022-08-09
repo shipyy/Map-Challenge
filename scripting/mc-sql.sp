@@ -591,6 +591,42 @@ public int Menu_ProfileHandler(Handle menu, MenuAction action, int param1, int p
 	return 0;
 }
 
+public void db_GetPlayerSteamdID(int client, char szPlayerName[MAX_NAME_LENGTH])
+{   
+    Handle pack = CreateDataPack();
+    WritePackCell(pack, client);
+    WritePackString(pack, szPlayerName);
+
+    char szQuery[1024];
+    Format(szQuery, sizeof(szQuery), "SELECT steamid FROM ck_challenge_players WHERE name = '%s';", szPlayerName);
+    SQL_TQuery(g_hDb, sql_DGetPlayerSteamdIDCallback, szQuery, pack, DBPrio_Low);
+}
+
+public void sql_DGetPlayerSteamdIDCallback(Handle owner, Handle hndl, const char[] error, any pack)
+{
+    if (hndl == null)
+    {
+        LogError("[Map Challenge] SQL Error (sql_DGetPlayerSteamdIDCallback): %s", error);
+        CloseHandle(pack);
+        return;
+    }
+
+    ResetPack(pack);
+    int client = ReadPackCell(pack);
+    char szPlayerName[MAX_NAME_LENGTH];
+    ReadPackString(pack, szPlayerName, sizeof szPlayerName);
+    CloseHandle(pack);
+
+    if (SQL_HasResultSet(hndl) && SQL_FetchRow(hndl)){
+        char szSteamID[32];
+        SQL_FetchString(hndl, 0, szSteamID, sizeof szSteamID);
+        db_viewPlayerProfile(client, szSteamID);
+    }
+    else {
+        CPrintToChat(client, "%t", "player_not_found", g_szChatPrefix, szPlayerName);
+    }
+}
+
 /////
 //DISPLAY TOP CHALLENGE PLAYERS LEADERBOARD
 /////
@@ -618,6 +654,7 @@ public void sql_DisplayOverallTOPCallback(Handle owner, Handle hndl, const char[
     ResetPack(pack);
     int client = ReadPackCell(pack);
     int style = ReadPackCell(pack);
+    CloseHandle(pack);
 
     if (SQL_HasResultSet(hndl)){
 
