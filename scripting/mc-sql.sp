@@ -388,11 +388,14 @@ public void sql_PlayerExistsCheckCallback(Handle owner, Handle hndl, const char[
 
 public void db_InsertPlayer(int client, float runtime, int style)
 {
-    Handle pack = CreateDataPack();
-    WritePackCell(pack, client);
-    WritePackFloat(pack, runtime);
-    WritePackCell(pack, style);
-    
+    //INSERT PROFILES
+    Handle data = CreateDataPack();
+    WritePackCell(data, client);
+    WritePackFloat(data, runtime);
+    WritePackCell(data, style);
+
+    Transaction InsertProfiles = SQL_CreateTransaction();
+
     char szUName[MAX_NAME_LENGTH];
     
     GetClientName(client, szUName, MAX_NAME_LENGTH);
@@ -400,12 +403,32 @@ public void db_InsertPlayer(int client, float runtime, int style)
     //ESCAPE NAME STRING
     char szName[MAX_NAME_LENGTH * 2 + 1];
     SQL_EscapeString(g_hDb, szUName, szName, MAX_NAME_LENGTH * 2 + 1);
-    
+
     char szQuery[255];
     for(int i = 0; i < MAX_STYLES; i++){
         Format(szQuery, sizeof(szQuery), sql_InsertPlayer, g_szSteamID[client], szName, i, 0);
-        SQL_TQuery(g_hDb, sql_InsertPlayerCallback, szQuery, pack, DBPrio_Low);
+        SQL_AddQuery(InsertProfiles, szQuery);
     }
+
+    SQL_ExecuteTransaction(g_hDb, InsertProfiles, SQLTxn_CreateProfilesSuccess, SQLTxn_CreateProfilesFailed, data);
+}
+
+public void SQLTxn_CreateProfilesSuccess(Handle db, any data, int numQueries, Handle[] results, any[] queryData)
+{
+    PrintToServer("[Map Challenge] Player Profiles succesfully created!");
+
+    ResetPack(data);
+    int client = ReadPackCell(data);
+    float runtime = ReadPackFloat(data);
+    int style = ReadPackCell(data);
+    CloseHandle(data);
+
+    db_TimesExistsCheck(client, runtime, style);
+}
+
+public void SQLTxn_CreateProfilesFailed(Handle db, any data, int numQueries, const char[] error, int failIndex, any[] queryData)
+{
+	SetFailState("[Map Challenge] Player Profile's could not be created! Error: %s", error);
 }
 
 public void sql_InsertPlayerCallback(Handle owner, Handle hndl, const char[] error, any pack)
@@ -514,7 +537,7 @@ public void sql_viewPlayerProfileCallback(Handle owner, Handle hndl, const char[
         return;
     }
 
-    if (SQL_HasResultSet(hndl)){
+    if (SQL_HasResultSet(hndl) && SQL_GetRowCount(hndl) != 0){
 
         Menu menu = new Menu(Menu_ProfileHandler);
 
@@ -551,6 +574,11 @@ public void sql_viewPlayerProfileCallback(Handle owner, Handle hndl, const char[
         SetMenuExitButton(menu, true);
         DisplayMenu(menu, client, MENU_TIME_FOREVER);
         
+    }
+    else {
+        char szName[MAX_NAME_LENGTH];
+        GetClientName(client, szName, MAX_NAME_LENGTH);
+        CPrintToChat(client, "%t", "player_data_not_found", g_szChatPrefix, szName);
     }
 
 }

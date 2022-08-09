@@ -65,4 +65,9 @@
 		"#format"	"{1:s}"
 		"en"		"{blue}{1} | {red}Wrong style value, type {yellow}!acronyms{red} to see all the available styles"
 	}
+	"player_data_not_found"
+	{
+		"#format"	"{1:s},{2:s}"
+		"en"		"{blue}{1} | {red}There is no player data available for {yellow}{2}"
+	}
 }

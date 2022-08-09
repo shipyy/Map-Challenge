@@ -112,21 +112,23 @@ public void ProfileMenu(int client, char szSteamID[32])
 {
 	if(StrEqual(szSteamID, ""))
 	{
-		char szPlayerName[MAX_NAME_LENGTH];
-		Menu menu = CreateMenu(ProfilePlayerSelectMenuHandler);
-		SetMenuTitle(menu, "Challenge Profile Menu - Choose a player\n------------------------------\n");
-		GetClientName(client, szPlayerName, sizeof(szPlayerName));
-		AddMenuItem(menu, szPlayerName, szPlayerName);
-		for (int i = 1; i <= MaxClients; i++)
+        char szBuffer[256];
+        char szPlayerName[MAX_NAME_LENGTH];
+        Menu menu = CreateMenu(ProfilePlayerSelectMenuHandler);
+        SetMenuTitle(menu, "Challenge Profile Menu - Choose a player\n------------------------------\n");
+
+        for (int i = 1; i <= MaxClients; i++)
 		{
-			if (IsValidClient(i) && !IsFakeClient(i) && i != client)
+			if (IsValidClient(i) && !IsFakeClient(i))
 			{
-				GetClientName(i, szPlayerName, sizeof(szPlayerName));
-				AddMenuItem(menu, szPlayerName, szPlayerName);
+                GetClientName(i, szPlayerName, sizeof(szPlayerName));
+                Format(szBuffer, sizeof szBuffer, "%d", i);
+                AddMenuItem(menu, szBuffer, szPlayerName);
 			}
-		}
-		SetMenuExitButton(menu, true);
-		DisplayMenu(menu, client, MENU_TIME_FOREVER);
+        }
+        
+        SetMenuExitButton(menu, true);
+        DisplayMenu(menu, client, MENU_TIME_FOREVER);
 	}
 	else
 	{
@@ -137,24 +139,13 @@ public void ProfileMenu(int client, char szSteamID[32])
 public int ProfilePlayerSelectMenuHandler(Handle menu, MenuAction action, int param1, int param2)
 {
 	if (action == MenuAction_Select)
-	{
-		char szPlayerName[MAX_NAME_LENGTH];
-		char szBuffer[MAX_NAME_LENGTH];
-		char szSteamId[32];
-		GetMenuItem(menu, param2, szPlayerName, sizeof(szPlayerName));
-		for (int i = 0; i < MaxClients; i++)
-		{
-			if (IsValidClient(i) && !IsFakeClient(i))
-			{
-				GetClientName(i, szBuffer, sizeof(szBuffer));
-				if (StrEqual(szPlayerName, szBuffer))
-				{
-					GetClientAuthId(i, AuthId_Steam2, szSteamId, 32, true);
-					db_viewPlayerProfile(param1, szSteamId);
-					break;	
-				}
-			}
-		}
+	{	
+        char szBuffer[8];
+        
+        GetMenuItem(menu, param2, szBuffer, sizeof szBuffer);
+
+        db_viewPlayerProfile(StringToInt(szBuffer), g_szSteamID[(StringToInt(szBuffer))]);
+
 	}
 	else if (action == MenuAction_End)
 		delete menu;
