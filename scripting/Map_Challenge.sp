@@ -95,8 +95,8 @@ enum struct TOP5_entry{
 public void OnPluginStart()
 {
     EngineVersion eGame = GetEngineVersion();
-    if(eGame != Engine_CSGO && eGame != Engine_CSS)
-		SetFailState("[Surf Timer][TDF] This plugin is for CSGO/CSS only.");
+    if(eGame != Engine_CSGO)
+		SetFailState("[MapChallenge] This plugin is for CSGO only.");
     
     // reload language files
     LoadTranslations("mapchallenge.phrases");
