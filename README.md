@@ -18,8 +18,8 @@ You can customize the map, style, duration of the callenge and points received.
 ## Requirements
 
 **Plugins**
-* [SurfTimer](https://github.com/surftimer/SurfTimer)
-* [SurfTimer-Discord](https://github.com/surftimer/SurfTimer-discord) (*optional*)
+*  (*required*) [SurfTimer](https://github.com/surftimer/SurfTimer)
+* (*optional*) [SurfTimer-Discord](https://github.com/surftimer/SurfTimer-discord)
 
 ## Showcase
 # Current Challenge info display
@@ -37,7 +37,7 @@ You can customize the map, style, duration of the callenge and points received.
 ![image](https://user-images.githubusercontent.com/70631212/180698128-4f3b07bf-f030-413d-ab06-81f10cba349d.png)
 
 ## Notification when a challenge ends
-![image](https://user-images.githubusercontent.com/70631212/180698165-976e768e-eb35-4ff7-9b8d-395160ade415.png)
+![image](https://user-images.githubusercontent.com/70631212/183961337-c9a06953-b6f6-40a9-81fa-8467be4f895b.png)
 
 ## How To
 
@@ -56,6 +56,7 @@ Command | Description | Usage
 * If there is a challenge on going, it will automatically stop if it reaches the `final date` OR if an admin uses `sm_end_challenge`
 * The point distribution is done automatically when a challenge ends
 * If there is a challenge on going all players ingame will be notified in which map it is
+* When used with [SurfTimer-Discord](https://github.com/surftimer/SurfTimer-discord) (*optional*) it allows you to set a custom role name for pings
 
 ## Future Ideas
 * Discord Integration (Done)
