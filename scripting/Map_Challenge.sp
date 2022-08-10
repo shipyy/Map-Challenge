@@ -110,12 +110,15 @@ public void OnPluginStart()
 }
 
 public void OnMapStart(){
-
-    //CURRENT MAP NAME
-    GetCurrentMap(g_szMapName, sizeof(g_szMapName));
-
-    //CHECK CHALLENGE IS ACTIVE
-    db_CheckChallengeActive();
+	
+	//CURRENT MAP NAME
+	GetCurrentMap(g_szMapName, sizeof(g_szMapName));
+	
+	//RESET VALUES
+	ResetDefaults();
+	
+	//CHECK CHALLENGE IS ACTIVE
+	db_CheckChallengeActive();
 }
 
 public void OnClientPutInServer(int client)
@@ -128,8 +131,8 @@ public void OnClientPutInServer(int client)
 
 public Action surftimer_OnMapFinished(int client, float fRunTime, char sRunTime[54], int rank, int total, int style)
 {
-    if(g_bIsCurrentMapChallenge && g_bIsChallengeActive && (g_iChallenge_Style == style))
-        db_PlayerExistsCheck(client, fRunTime, style);
+	if(g_bIsCurrentMapChallenge && g_bIsChallengeActive && (g_iChallenge_Style == style))
+		db_PlayerExistsCheck(client, fRunTime, style);
 
-    return Plugin_Handled;
+	return Plugin_Handled;
 }
