@@ -1,3 +1,6 @@
+# *Not exactly stable*
+  For now use under your descretion, there may still exist unforseen bugs :)
+
 # Map-Challenge
 
 *This plugin is suposed to be used alongside* [SurfTimer](https://github.com/surftimer/SurfTimer)
