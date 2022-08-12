@@ -2,8 +2,9 @@ name: SM Compilation Test
 
 on:
   pull_request:
-    branches:
+    branches: 
       - master
+
 jobs:
   build:
     runs-on: ubuntu-latest
