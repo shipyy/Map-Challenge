@@ -63,7 +63,7 @@ char g_szStyleAcronyms[][] =
 // Client's steamID
 char g_szSteamID[MAXPLAYERS + 1][32];
 
-char g_szChatPrefix[64] = "MAP CHALLENGE";
+char g_szChatPrefix[64];
 
 /////
 //FORWARDS
@@ -82,11 +82,13 @@ enum struct TOP5_entry{
 /////
 //INCLUDES
 /////
+#include <autoexecconfig>
 #include <surftimer>
 #include <colorlib>
 #include <mapchallenge>
 #include "mc-queries.sp"
 #include "mc-sql.sp"
+#include "mc-convars.sp"
 #include "mc-misc.sp"
 #include "mc-api.sp"
 #include "mc-commands.sp"
@@ -94,19 +96,20 @@ enum struct TOP5_entry{
 
 public void OnPluginStart()
 {
-    EngineVersion eGame = GetEngineVersion();
-    if(eGame != Engine_CSGO)
+	EngineVersion eGame = GetEngineVersion();
+	if(eGame != Engine_CSGO)
 		SetFailState("[MapChallenge] This plugin is for CSGO only.");
-    
-    // reload language files
-    LoadTranslations("mapchallenge.phrases");
+	
+	// reload language files
+	LoadTranslations("mapchallenge.phrases");
 
-    Register_Forwards();
+	Register_Forwards();
 
-    db_setupDatabase();
+	db_setupDatabase();
 
-    CreateCMDS();
+	CreateCMDS();
 
+	ConVars_Create();
 }
 
 public void OnMapStart(){
