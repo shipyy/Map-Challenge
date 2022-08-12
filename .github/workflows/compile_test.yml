@@ -20,7 +20,7 @@ jobs:
       - name: Set environment variables
         run: |
           echo SCRIPTS_PATH=$GITHUB_WORKSPACE/scripting >> $GITHUB_ENV
-          echo INCLUDE_PATH=$GITHUB_WORKSPACE/scripting/include >> $GITHUB_ENV
+          echo INCLUDE_PATH=$SCRIPTS_PATH/include >> $GITHUB_ENV
 
       - name: Setup SourcePawn Compiler
         uses: rumblefrog/setup-sp@v1.2.1
@@ -29,11 +29,11 @@ jobs:
 
       - name: Compile plugins
         run: |
-          for file in $SCRIPTS_PATH
+          for file in *.sp
           do
             echo -e "\n--- Compiling $file ---"
             spcomp -E -w234 -O2 -v2 -i $INCLUDE_PATH $file
           done
-          echo "--- COMPILED FILES ---"
+          echo "\n--- COMPILED FILES ---"
           ls
         working-directory: ${{ env.SCRIPTING_PATH }}
