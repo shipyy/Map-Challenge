@@ -238,7 +238,6 @@ public void sql_EndCurrentChallengeCallback(Handle owner, Handle hndl, const cha
         return;
     }
     
-    //db_DistributePoints(client);
     db_AddFinishedChallenge(client);
 }
 
@@ -267,7 +266,6 @@ public void sql_DistributePointsCallback(Handle owner, Handle hndl, const char[]
         if(SQL_GetRowCount(hndl) <= 0){
             SendChallengeEndForward(client, szTop5, 0);
             db_UpdateFinishedChallengeData(client, "none", 0);
-            //db_AddFinishedChallenge(client, "", 0);
             ResetDefaults();
             CPrintToChatAll("%t", "Challenge_Ended", g_szChatPrefix, 0);
             return;
@@ -289,7 +287,6 @@ public void sql_DistributePointsCallback(Handle owner, Handle hndl, const char[]
                 points_to_add = g_iChallenge_Points;
                 winner_runtime = SQL_FetchFloat(hndl, 4);
                 db_UpdateFinishedChallengeData(client, szPlayerSteamID, nr_players);
-                //db_AddFinishedChallenge(client, szPlayerSteamID, nr_players);
             }
             else if(1 < rank <= 10)
                 points_to_add = RoundToZero(g_iChallenge_Points * (1.0 - ((rank-1) * 0.1)));
@@ -369,6 +366,7 @@ public void db_UpdateFinishedChallengeData(int client, char szPlayerSteamID[32],
     Format(szQuery, sizeof(szQuery), sql_UpdateFinishedChallengeData, szPlayerSteamID, nr_players, g_sChallenge_MapName, g_iChallenge_Style, g_iChallenge_Points, g_iChallenge_ID);
     SQL_TQuery(g_hDb, SQL_CheckCallback, szQuery, DBPrio_Low); 
 }
+
 
 /////
 //ON MAP FINISHED DATA HANDLING
