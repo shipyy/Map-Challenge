@@ -15,6 +15,7 @@ public Plugin myinfo =
 /////
 
 // SQL driver
+
 Handle g_hDb = null;
 
 //CHALLENGE
