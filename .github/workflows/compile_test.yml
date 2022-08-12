@@ -30,7 +30,7 @@ jobs:
       - name: Compile plugins
         run: |
           cd scripting
-          spcomp -E -w234 -O2 -v2 -i include Map-Challenge.sp
+          spcomp -E -w234 -O2 -v2 -i include Map_Challenge.sp
           echo "\n--- COMPILE DONE ---"
           ls
         working-directory: ${{ env.SCRIPTS_PATH }}
