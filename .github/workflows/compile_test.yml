@@ -36,4 +36,4 @@ jobs:
           done
           echo "--- COMPILED FILES ---"
           ls
-        working-directory: ${{ env.SCRIPTING_PATH }}
+        working-directory: ${{ env.SCRIPTS_PATH }}
