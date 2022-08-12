@@ -106,13 +106,10 @@ public void sql_CheckChallengeActiveCallback(Handle owner, Handle hndl, const ch
 
                 if(StrEqual(g_szMapName, g_sChallenge_MapName, false))
                     g_bIsCurrentMapChallenge = true;
-
-                //TIMER THAT CHECKS REGULARLY IF THE TIME REMAINING OF CURRENT CHALLENGE HAS RUN OUT
-                CreateTimer(360.0, Check_Challenge_End, INVALID_HANDLE, TIMER_FLAG_NO_MAPCHANGE | TIMER_REPEAT);
             }
         }
         else{
-            g_bIsChallengeActive = false;
+            ResetDefaults();
             //g_iChallenge_ID = SQL_FetchInt(hndl, 0);
             //SQL_FetchString(hndl, 2, g_sChallenge_MapName, sizeof(g_sChallenge_MapName));
         }
@@ -177,8 +174,8 @@ public void db_AddChallenge(int client, char szMapName[32], int style, int point
 
     days = RoundToZero(duration);
     hours = RoundToZero(FloatAbs(FloatFraction(duration)) * 12 / 0.5);
-    Format(szStart, sizeof szStart, "CURRENT_TIMESTAMP(6)");
-    Format(szEnd, sizeof szStart, "CURRENT_TIMESTAMP(6) + INTERVAL %i DAY + INTERVAL %i HOUR", days, hours);
+    Format(szStart, sizeof szStart, "UTC_TIMESTAMP(6)");
+    Format(szEnd, sizeof szStart, "UTC_TIMESTAMP(6) + INTERVAL %i DAY + INTERVAL %i HOUR", days, hours);
 
     Format(szQuery_Insert, sizeof(szQuery_Insert), sql_InsertChallenge, szMapName, szStart, szEnd, style, points, 1);
 
@@ -193,7 +190,8 @@ public void SQLTxn_AddChallenge_Success(Handle db, any data, int numQueries, Han
 {   
     g_bIsChallengeActive = true;
 
-    CreateTimer(360.0, Check_Challenge_End, INVALID_HANDLE, TIMER_FLAG_NO_MAPCHANGE | TIMER_REPEAT);
+    CreateTimer(30.0, Check_Challenge_End, INVALID_HANDLE, TIMER_FLAG_NO_MAPCHANGE | TIMER_REPEAT);
+    CreateTimer(360.0, Check_Challenge_Timeleft, INVALID_HANDLE, TIMER_FLAG_NO_MAPCHANGE | TIMER_REPEAT);
 
     if (SQL_HasResultSet(results[1]) && SQL_FetchRow(results[1])) {
         SQL_FetchString(results[1], 0, g_sChallenge_InitialDate, sizeof(g_sChallenge_InitialDate));
@@ -240,7 +238,8 @@ public void sql_EndCurrentChallengeCallback(Handle owner, Handle hndl, const cha
         return;
     }
     
-    db_DistributePoints(client);
+    //db_DistributePoints(client);
+    db_AddFinishedChallenge(client);
 }
 
 public void db_DistributePoints(int client){
@@ -267,7 +266,8 @@ public void sql_DistributePointsCallback(Handle owner, Handle hndl, const char[]
 
         if(SQL_GetRowCount(hndl) <= 0){
             SendChallengeEndForward(client, szTop5, 0);
-            db_AddFinishedChallenge(client, "", 0);
+            db_UpdateFinishedChallengeData(client, "none", 0);
+            //db_AddFinishedChallenge(client, "", 0);
             ResetDefaults();
             CPrintToChatAll("%t", "Challenge_Ended", g_szChatPrefix, 0);
             return;
@@ -288,10 +288,11 @@ public void sql_DistributePointsCallback(Handle owner, Handle hndl, const char[]
             if(rank == 1){
                 points_to_add = g_iChallenge_Points;
                 winner_runtime = SQL_FetchFloat(hndl, 4);
-                db_AddFinishedChallenge(client, szPlayerSteamID, nr_players);
+                db_UpdateFinishedChallengeData(client, szPlayerSteamID, nr_players);
+                //db_AddFinishedChallenge(client, szPlayerSteamID, nr_players);
             }
             else if(1 < rank <= 10)
-                points_to_add = (g_iChallenge_Points / 2) - ((rank-2) * 100);
+                points_to_add = RoundToZero(g_iChallenge_Points * (1.0 - ((rank-1) * 0.1)));
             else
                 points_to_add = 5;
     
@@ -334,19 +335,40 @@ public void AddChallengePoints(char szSteamID[32], int style, int points_to_add)
 }
 
 /////
-//ADD FINISHED CHALLENGE TO CK_FINISHED_CHALLENGES
+//ADD FINISHED CHALLENGE DATA TO CK_FINISHED_CHALLENGES
 /////
-public void db_AddFinishedChallenge(int client, char szWinner[32], int nr_participants)
+public void db_AddFinishedChallenge(int client)
 {
+    Transaction finished_challenge_transaction = SQL_CreateTransaction();
 
     char szQuery[1024];
-    if (nr_participants != 0)
-        Format(szQuery, sizeof szQuery, sql_InsertFinishedChallenge_WithWinner, g_iChallenge_ID, szWinner, nr_participants, g_sChallenge_MapName, g_iChallenge_Style, g_iChallenge_Points, g_sChallenge_InitialDate, g_sChallenge_FinalDate);
-    else
-        Format(szQuery, sizeof szQuery, sql_InsertFinishedChallenge_NoWinner, g_iChallenge_ID, nr_participants, g_sChallenge_MapName, g_iChallenge_Style, g_iChallenge_Points, g_sChallenge_InitialDate, g_sChallenge_FinalDate);
-    SQL_TQuery(g_hDb, SQL_CheckCallback, szQuery, DBPrio_Low); 
+    Format(szQuery, sizeof szQuery, sql_InsertFinishedChallenge, g_iChallenge_ID, g_iChallenge_ID, g_iChallenge_ID);
+
+    SQL_AddQuery(finished_challenge_transaction, szQuery);
+
+    SQL_ExecuteTransaction(g_hDb, finished_challenge_transaction, finished_challenge_transaction_Success , finished_challenge_transaction_Failed, client, DBPrio_High);
 }
 
+public void finished_challenge_transaction_Success(Handle db, any client, int numQueries, Handle[] results, any[] queryData)
+{
+    PrintToServer("[MapChallenge] Finished Challenge Transaction Sucessfully Done!");
+    db_DistributePoints(client);
+}
+
+public void finished_challenge_transaction_Failed(Handle db, any pack, int numQueries, const char[] error, int failIndex, any[] queryData)
+{
+    if (strcmp(error, "",false) != 0)
+	    LogError("[MapChallenge] SQL Error (finished_challenge_transaction): %s", error);
+    else
+        PrintToServer("[MapChallenge] Finished Challenge Transaction already performed by another server!");
+}
+
+public void db_UpdateFinishedChallengeData(int client, char szPlayerSteamID[32], int nr_players)
+{
+    char szQuery[1024];
+    Format(szQuery, sizeof(szQuery), sql_UpdateFinishedChallengeData, szPlayerSteamID, nr_players, g_sChallenge_MapName, g_iChallenge_Style, g_iChallenge_Points, g_iChallenge_ID);
+    SQL_TQuery(g_hDb, SQL_CheckCallback, szQuery, DBPrio_Low); 
+}
 
 /////
 //ON MAP FINISHED DATA HANDLING
@@ -367,22 +389,23 @@ public void db_PlayerExistsCheck(int client, float runtime, int style)
 }
 
 public void sql_PlayerExistsCheckCallback(Handle owner, Handle hndl, const char[] error, any pack)
-{
-	if (hndl == null)
+{   
+    if (hndl == null)
 	{
 		LogError("[Map Challenge] SQL Error (sql_PlayerExistsCheckCallback): %s", error);
 		CloseHandle(pack);
 		return;
-	}
-
-	ResetPack(pack);
-	int client = ReadPackCell(pack);
-	float runtime = ReadPackFloat(pack);
-	int style = ReadPackCell(pack);
+    }
     
-	if (SQL_HasResultSet(hndl) && SQL_FetchRow(hndl))
+    ResetPack(pack);
+    int client = ReadPackCell(pack);
+    float runtime = ReadPackFloat(pack);
+    int style = ReadPackCell(pack);
+    CloseHandle(pack);
+
+    if (SQL_HasResultSet(hndl) && SQL_FetchRow(hndl))
         db_TimesExistsCheck(client, runtime, style);
-	else
+    else
         db_InsertPlayer(client, runtime, style);
 }
 
@@ -428,7 +451,8 @@ public void SQLTxn_CreateProfilesSuccess(Handle db, any data, int numQueries, Ha
 
 public void SQLTxn_CreateProfilesFailed(Handle db, any data, int numQueries, const char[] error, int failIndex, any[] queryData)
 {
-	SetFailState("[Map Challenge] Player Profile's could not be created! Error: %s", error);
+    CloseHandle(data);
+    LogError("[Map Challenge] Player Profile's could not be created! Error: %s", error);
 }
 
 public void sql_InsertPlayerCallback(Handle owner, Handle hndl, const char[] error, any pack)
@@ -444,6 +468,7 @@ public void sql_InsertPlayerCallback(Handle owner, Handle hndl, const char[] err
     int client = ReadPackCell(pack);
     float runtime = ReadPackFloat(pack);
     int style = ReadPackCell(pack);
+    CloseHandle(pack);
     
     db_TimesExistsCheck(client, runtime, style);
 }
@@ -488,7 +513,7 @@ public void db_UpdateTime(int client, float runtime, int style)
 {
     char szQuery[255];
     Format(szQuery, sizeof(szQuery), sql_UpdateRuntime, runtime, g_szSteamID[client], g_szMapName, style, g_sChallenge_InitialDate, g_sChallenge_FinalDate);
-    SQL_TQuery(g_hDb, sql_UpdateTimesCallback, szQuery, DBPrio_Low);
+    SQL_TQuery(g_hDb, sql_UpdateTimesCallback, szQuery, client, DBPrio_Low);
 }
 
 public void db_InsertTime(int client, float runtime, int style)
@@ -501,7 +526,7 @@ public void db_InsertTime(int client, float runtime, int style)
     SQL_EscapeString(g_hDb, szUName, szName, MAX_NAME_LENGTH * 2 + 1);
     
     char szStart[512];
-    Format(szStart, sizeof szStart, "CURRENT_TIMESTAMP(6)");
+    Format(szStart, sizeof szStart, "UTC_TIMESTAMP(6)");
 
     char szQuery[255];
     Format(szQuery, sizeof(szQuery), sql_InsertRuntime, g_iChallenge_ID, g_szSteamID[client], szName, g_szMapName, runtime, style, szStart);
@@ -865,6 +890,47 @@ public void sql_GetRemainingTimeCallback(Handle owner, Handle hndl, const char[]
 
 }
 
+public void db_GetRemainingTime_Timer(){
+
+    if(g_bIsChallengeActive){
+        char szQuery[255];
+        Format(szQuery, sizeof(szQuery), sql_RemainingTime, g_iChallenge_ID);
+        SQL_TQuery(g_hDb, sql_GetRemainingTime_TimerCallback, szQuery, DBPrio_Low);
+    }
+
+}
+
+public void sql_GetRemainingTime_TimerCallback(Handle owner, Handle hndl, const char[] error, any data){
+
+    if (hndl == null)
+	{
+		LogError("[Map Challenge] SQL Error (sql_GetRemainingTime_TimerCallback): %s", error);
+		return;
+	}
+    
+    if (SQL_HasResultSet(hndl) && SQL_FetchRow(hndl)){
+
+        char sztimeleft[32];
+
+        float timeleft = SQL_FetchFloat(hndl, 0);
+
+        if(timeleft > 0.0){
+            for(int i = 1; i <= MaxClients; i++)
+            {
+                if (IsValidClient(i) && !IsFakeClient(i)) {
+
+                    FormatTimeFloat(i, timeleft, sztimeleft, sizeof sztimeleft, false);
+
+                    if( strcmp(g_szMapName, g_sChallenge_MapName, false) != 0 )
+                        CPrintToChat(i, "%t", "Challenge_Ongoing", g_szChatPrefix, g_sChallenge_MapName);
+                    else
+                        CPrintToChat(i, "%t", "Challenge_Timeleft", g_szChatPrefix, sztimeleft);
+                }
+            }
+        }
+    }
+}
+
 /////
 //CHECK IF CURRENT CHALLENGE HAS ENDED
 /////
@@ -886,22 +952,8 @@ public void sql_Check_Challenge_EndCallback(Handle owner, Handle hndl, const cha
 
         float time_diff = SQL_FetchFloat(hndl, 0);
 
-        char sztimeleft[32];
-
         if(time_diff <= 0.0){
             db_EndCurrentChallenge(0, g_iChallenge_ID);
-        }
-        else{
-            FormatTimeFloat(data, time_diff, sztimeleft, sizeof(sztimeleft), false);
-
-            for(int i = 1; i <= MaxClients; i++)
-            {
-                if (IsValidClient(i) && !IsFakeClient(i)) {
-                    CPrintToChat(i, "%t", "Challenge_Timeleft", g_szChatPrefix, sztimeleft);
-                    if( strcmp(g_szMapName, g_sChallenge_MapName, false) != 0 )
-                        CPrintToChat(i, "%t", "Challenge_Ongoing", g_szChatPrefix, g_sChallenge_MapName);
-                }
-            }
         }
     }
 }
@@ -971,7 +1023,7 @@ public void SQL_Challenge_InfoCallback(Handle owner, Handle hndl, const char[] e
         int seconds = StringToInt(splitsStart_Time[2]);
         int ms = RoundToZero(FloatFraction(StringToFloat(splitsStart_Time[2])) * 1000);
 
-        Format(szItem, sizeof(szItem), "Started : %sh %sm %ds %dms  %s-%s-%s", splitsStart_Time[0], splitsStart_Time[1], seconds, ms, splitsStart_Date[2], splitsStart_Date[1], splitsStart_Date[0]);
+        Format(szItem, sizeof(szItem), "Started : (UTC) %sh %sm %ds %dms  %s-%s-%s", splitsStart_Time[0], splitsStart_Time[1], seconds, ms, splitsStart_Date[2], splitsStart_Date[1], splitsStart_Date[0]);
         AddMenuItem(Challenge_Info_Menu, "", szItem, ITEMDRAW_DISABLED);
         
         //SPLIT TIME FROM DATE
@@ -987,7 +1039,7 @@ public void SQL_Challenge_InfoCallback(Handle owner, Handle hndl, const char[] e
         seconds = StringToInt(splitsEnd_Time[2]);
         ms = RoundToZero(FloatFraction(StringToFloat(splitsEnd_Time[2])) * 1000);
 
-        Format(szItem, sizeof(szItem), "Ends : %sh %sm %ds %dms  %s-%s-%s", splitsEnd_Time[0], splitsEnd_Time[1],  seconds, ms, splitsEnd_Date[2], splitsEnd_Date[1], splitsEnd_Date[0]);
+        Format(szItem, sizeof(szItem), "Ends : (UTC) %sh %sm %ds %dms  %s-%s-%s", splitsEnd_Time[0], splitsEnd_Time[1],  seconds, ms, splitsEnd_Date[2], splitsEnd_Date[1], splitsEnd_Date[0]);
         AddMenuItem(Challenge_Info_Menu, "", szItem, ITEMDRAW_DISABLED);
 
         char sztimeleft[64];

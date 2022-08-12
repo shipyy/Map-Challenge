@@ -117,8 +117,12 @@ public void OnMapStart(){
 	//RESET VALUES
 	ResetDefaults();
 	
-	//CHECK CHALLENGE IS ACTIVE
-	db_CheckChallengeActive();
+	//CHECK CHALLENGE IS ACTIVE)
+	CreateTimer(30.0, Check_Challenge_Active, INVALID_HANDLE, TIMER_FLAG_NO_MAPCHANGE | TIMER_REPEAT);
+	
+	//TIMER THAT CHECKS REGULARLY IF THE TIME REMAINING OF CURRENT CHALLENGE HAS RUN OUT
+	CreateTimer(30.0, Check_Challenge_End, INVALID_HANDLE, TIMER_FLAG_NO_MAPCHANGE | TIMER_REPEAT);
+	CreateTimer(350.0, Check_Challenge_Timeleft, INVALID_HANDLE, TIMER_FLAG_NO_MAPCHANGE | TIMER_REPEAT);
 }
 
 public void OnClientPutInServer(int client)
