@@ -2,8 +2,7 @@ name: SM Compilation Test
 
 on:
   pull_request:
-    branches: 
-      - master
+    branches: master
 
 jobs:
   build:
@@ -36,4 +35,4 @@ jobs:
           done
           echo "--- COMPILED FILES ---"
           ls
-        working-directory: ${{ env.SCRIPTING_PATH }}
+        working-directory: ${{ env.SCRIPTS_PATH }}
