@@ -30,6 +30,7 @@ jobs:
       - name: Compile plugins
         run: |
           cd scripting
+          ls
           for file in *.sp
           do
             echo -e "\n--- Compiling $file ---"
