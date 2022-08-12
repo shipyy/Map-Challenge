@@ -3,76 +3,76 @@
     "Challenge_Added"
 	{
 		"#format"	"{1:s},{2:s}"
-		"en"		"{blue}{1}{default} | Added new Challenge for {red}{2}{default}."
+		"en"		"{blue}{1}{default} | Added new challenge for {red}{2}"
 	}
     "Challenge_Active"
 	{
 		"#format"	"{1:s}"
-		"en"		"{blue}{1}{default} | {red}There is already a challenge going on."
+		"en"		"{blue}{1}{default} | There is an {red}ongoing {green}!challenge"
 	}
     "Challenge_Inactive"
 	{
 		"#format"	"{1:s}"
-		"en"		"{blue}{1}{default} | {red}There is no challenge going on."
+		"en"		"{blue}{1}{default} | There is {red}no challenge{default} going on"
 	}
     "Challenge_Ended"
 	{
-		"#format"	"{1:s},{2:i}"
-		"en"		"{blue}{1}{default} | {red}Challenge Ended with {yellow}{2}{red} Participants."
+		"#format"	"{1:s},{2:i},{3:s}"
+		"en"		"{blue}{1}{default} | Challenge {yellow}{3} {red}ended{default} with {yellow}{2}{default} participants"
 	}
     "Challenge_Timeleft"
 	{
 		"#format"	"{1:s},{2:s}"
-		"en"		"{blue}{1}{default} | Timeleft : {yellow}{2}."
+		"en"		"{blue}{1}{default} | Timeleft for {green}!challenge{default}: {yellow}{2}"
 	}
     "Add_Challenge_ERROR_Format"
 	{
 		"#format"	"{1:s}"
-		"en"		"{blue}{1}{default} | {red}Wrong Format u should use sm_add_challenge <mapname> #<style_acronym> <points> <duration>."
+		"en"		"{blue}{1}{default} | {red}Usage:{yellow} sm_add_challenge <mapname> #<style_acronym> <points> <duration>"
 	}
     "Map_Not_Valid"
 	{
 		"#format"	"{1:s},{2:s}"
-		"en"		"{blue}{1}{default} | Map {red}{2}{default} not found."
+		"en"		"{blue}{1}{default} | Map {red}{2}{default} not found"
 	}
     "Challenge_LeaderBoard_Empty"
 	{
 		"#format"	"{1:s}"
-		"en"		"{blue}{1}{default} | {red}There are no times for the challenge yet."
+		"en"		"{blue}{1}{default} | There are {red}no times{default} set for the challenge yet..."
 	}
     "Challenge_Points_Distributed"
 	{
 		"#format"	"{1:s}"
-		"en"		"{blue}{1}{default} | {red}The rewardsh have been distributed."
+		"en"		"{blue}{1}{default} | Rewards have been {green}distributed{default} to {yellow}Top 5{default} participants"
 	}
 	"Overall_Challenge_LeaderBoard_Empty"
 	{
 		"#format"	"{1:s},{2:s}"
-		"en"		"{blue}{1}{default} | {red}There are no player records for the overall {blue}{2}{default} style TOP."
+		"en"		"{blue}{1}{default} | There are {red}no player records for the overall {blue}{2}{default} style TOP"
 	}
 	"Challenge_NewTime"
 	{
 		"#format"	"{1:s}"
-		"en"		"{blue}{1}{default} | New challenge Personal Best."
+		"en"		"{blue}{1}{default} | {green}New{default} challenge {yellow}PB{default}!"
 	}
 	"Challenge_Ongoing"
 	{
 		"#format"	"{1:s},{2:s}"
-		"en"		"{blue}{1}{default} | There is a map challenge ongoing in {red}{2}{default}."
+		"en"		"{blue}{1}{default} | There is an {yellow}ongoing {green}!challenge{default}: {red}{2}"
 	}
 	"style_not_found"
 	{
 		"#format"	"{1:s}"
-		"en"		"{blue}{1}{default} | {red}Wrong style value, type {yellow}!style_acronyms{red} to see all the available styles."
+		"en"		"{blue}{1}{default} | {red}Wrong style{default}, type {yellow}!acronyms{default} to see all the available {red}styles"
 	}
 	"player_data_not_found"
 	{
 		"#format"	"{1:s},{2:s}"
-		"en"		"{blue}{1}{default} | {red}There is no player data available for {yellow}{2}."
+		"en"		"{blue}{1}{default} | {red}No player data available for {yellow}{2}"
 	}
 	"player_not_found"
 	{
 		"#format"	"{1:s},{2:s}"
-		"en"		"{blue}{1}{default} | {red}Player {yellow}{2}{red} not found."
+		"en"		"{blue}{1}{default} | {red}Player {yellow}{2}{red} not found"
 	}
 }
