@@ -3,7 +3,7 @@ name: Release
 on:
   push:
     branches:
-      - main
+      - release-action
 
 jobs:
   build:
@@ -20,7 +20,7 @@ jobs:
       - name: Set environment variables
         run: |
           echo SCRIPTS_PATH=$GITHUB_WORKSPACE/scripting >> $GITHUB_ENV
-          echo $(pwd) >> $GITHUB_ENV
+          echo HOME_PATH=$GITHUB_WORKSPACE >> $GITHUB_ENV
 
       - name: Setup SourcePawn Compiler ${{ matrix.SM_VERSION }}
         id: setup_sp
@@ -31,16 +31,14 @@ jobs:
 
       - name: Compile plugins
         run: |
-          cd ./
+          cd $GITHUB_WORKSPACE
           mkdir plugins
-          ls
           cd scripting
           spcomp -E -w234 -O2 -v2 -o '../plugins/Map_Challenge.smx' -i include Map_Challenge.sp
           echo "--- COMPILED FILES ---"
-          ls
-          echo "--- VERSION ---"
           cd ../plugins
           ls
+          echo "--- VERSION ---"
           echo ${{ steps.setup_sp.outputs.plugin-version }}
         working-directory: ${{ env.SCRIPTS_PATH }}
 
@@ -55,8 +53,8 @@ jobs:
         uses: montudor/action-zip@v1
 
       - name: Zip
-        run: zip -qq -r MapChallenge-v${{ steps.changelog_reader.outputs.version }}.zip plugins translations
-        working-directory: ../$SCRIPTS_PATH
+        run: zip -qq -r MapChallenge-v${{ steps.changelog_reader.outputs.version }}.zip plugins translations scripting/include
+        working-directory: ${{ env.HOME_PATH }}
 
       - name: Create Release
         uses: ncipollo/release-action@v1
