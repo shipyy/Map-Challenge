@@ -20,7 +20,6 @@ jobs:
       - name: Set environment variables
         run: |
           echo SCRIPTS_PATH=$GITHUB_WORKSPACE/scripting >> $GITHUB_ENV
-          echo SCRIPTS_PATH=$GITHUB_WORKSPACE/scripting >> $GITHUB_ENV
 
       - name: Setup SourcePawn Compiler
         uses: rumblefrog/setup-sp@v1.2.1
