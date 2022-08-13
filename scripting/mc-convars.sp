@@ -10,7 +10,3 @@ void ConVars_Create(){
     AutoExecConfig_ExecuteFile();
     AutoExecConfig_CleanFile();
 }
-
-void ConVars_Get(){
-    GetConVarString(g_sChatPrefix, g_szChatPrefix, sizeof g_szChatPrefix);
-}

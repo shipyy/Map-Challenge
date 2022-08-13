@@ -114,7 +114,7 @@ public void OnPluginStart()
 
 public void OnConfigsExecuted()
 {
-	ConVars_Get();
+    GetConVarString(g_sChatPrefix, g_szChatPrefix, sizeof g_szChatPrefix);
 }
 
 public void OnMapStart()
