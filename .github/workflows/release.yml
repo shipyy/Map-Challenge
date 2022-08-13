@@ -47,8 +47,10 @@ jobs:
           version: ${{ steps.setup_sp.outputs.plugin-version }}
           path: ./CHANGELOG.md
 
-      - name: Zip
+      - name: Install zip
         uses: montudor/action-zip@v1
+
+      - name: Zip
         run: zip -qq -r MapChallenge-v${{ steps.changelog_reader.outputs.version }}.zip plugins translations
         working-directory: ../$SCRIPTS_PATH
 
