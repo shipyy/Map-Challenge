@@ -112,8 +112,13 @@ public void OnPluginStart()
 	ConVars_Create();
 }
 
-public void OnMapStart(){
-	
+public void OnConfigsExecuted()
+{
+	ConVars_Get();
+}
+
+public void OnMapStart()
+{
 	//CURRENT MAP NAME
 	GetCurrentMap(g_szMapName, sizeof(g_szMapName));
 	

@@ -6,8 +6,11 @@ void ConVars_Create(){
     AutoExecConfig_SetFile("mapchallenge");
     
     g_sChatPrefix = AutoExecConfig_CreateConVar("mc_chat_prefix", "{blue}Map Challenge {default}|", "Chat messages prefix");
-    GetConVarString(g_sChatPrefix, g_szChatPrefix, sizeof g_szChatPrefix);
     
     AutoExecConfig_ExecuteFile();
     AutoExecConfig_CleanFile();
+}
+
+void ConVars_Get(){
+    GetConVarString(g_sChatPrefix, g_szChatPrefix, sizeof g_szChatPrefix);
 }
