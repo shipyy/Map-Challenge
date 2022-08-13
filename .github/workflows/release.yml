@@ -18,7 +18,9 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Set environment variables
-        run: echo SCRIPTS_PATH=$GITHUB_WORKSPACE/scripting >> $GITHUB_ENV
+        run: |
+          echo SCRIPTS_PATH=$GITHUB_WORKSPACE/scripting >> $GITHUB_ENV
+          echo $(pwd) >> $GITHUB_ENV
 
       - name: Setup SourcePawn Compiler ${{ matrix.SM_VERSION }}
         id: setup_sp
