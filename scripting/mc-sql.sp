@@ -289,7 +289,7 @@ public void sql_DistributePointsCallback(Handle owner, Handle hndl, const char[]
                 db_UpdateFinishedChallengeData(client, szPlayerSteamID, nr_players);
             }
             else if(1 < rank <= 10)
-                points_to_add = RoundToZero(g_iChallenge_Points * (1.0 - ((rank-1) * 0.1)));
+                points_to_add = RoundUp(RoundToZero(g_iChallenge_Points * (1.0 - ((rank-1) * 0.1))));
             else
                 points_to_add = 5;
     
