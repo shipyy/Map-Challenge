@@ -6,7 +6,7 @@ public Plugin myinfo =
 	name = "Map Challenges",
 	author = "https://github.com/shipyy",
 	description = "Allows Creation of challenges for surf maps",
-	version = "2.0.1",
+	version = "2.0.2",
 	url = "https://github.com/shipyy/Map-Challenge"
 };
 
@@ -112,8 +112,13 @@ public void OnPluginStart()
 	ConVars_Create();
 }
 
-public void OnMapStart(){
-	
+public void OnConfigsExecuted()
+{
+    GetConVarString(g_sChatPrefix, g_szChatPrefix, sizeof g_szChatPrefix);
+}
+
+public void OnMapStart()
+{
 	//CURRENT MAP NAME
 	GetCurrentMap(g_szMapName, sizeof(g_szMapName));
 	
