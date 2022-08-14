@@ -95,3 +95,8 @@ public void ResetDefaults()
 	g_sChallenge_MapName = "";
 	//g_fChallenge_Duration = 0.0;
 }
+
+public int RoundUp(int value)
+{
+	return value += 10 - (value % 10);
+}
