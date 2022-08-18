@@ -17,7 +17,7 @@ public Plugin myinfo =
 // SQL driver
 Handle g_hDb = null;
 
-//CHALLENGE
+//CHALLENGES
 int g_iChallenge_ID = 0;
 bool g_bIsChallengeActive = false;
 bool g_bIsCurrentMapChallenge = false;
@@ -60,6 +60,14 @@ char g_szStyleAcronyms[][] =
 	"fs"
 };
 
+//RACES
+ArrayList BUFFER_RacesList; //ONGOING RACES BUFFER
+ArrayList BUFFER_TempRacesList; //RACES BEING CREATED BUFFER
+ArrayList BUFFER_Invitations; //INVITATIONS BUFFER
+
+bool b_bInRace[MAXPLAYERS +1];
+bool b_bWaitingInviteResponse[MAXPLAYERS +1]; //USE THIS VARIABLE TO CREATE THE TIMER AND WHENEVER CLIENT RECEIVES ANY INFO ABOUT INVITATION DELETE TIMER AND SET THIS TO FALSE
+
 // Client's steamID
 char g_szSteamID[MAXPLAYERS + 1][32];
 
@@ -79,6 +87,74 @@ enum struct TOP5_entry{
 	char szRuntimeFormatted[32];
 	char szRuntimeDifference[32];
 }
+
+enum struct Racer{
+	int Client_ID;
+    bool IsRacing;
+    char szName[MAX_NAME_LENGTH];
+    float Runtime;
+
+	void SetDefaultValues() {
+        this.Client_ID = 0;
+        this.IsRacing = false;
+        this.szName = "";
+        this.Runtime = 0.0;
+    }
+
+	void setClientID(int ID){
+		this.Client_ID = ID;
+	}
+}
+
+enum struct Invite{
+	int RaceID;
+	Racer Player1;
+    Racer Player2;
+	bool Sent;
+	bool Received;
+	bool Accepted;
+	bool Denied;
+
+	void SetDefaultValues() {
+		this.Player1.SetDefaultValues();
+		this.Player2.SetDefaultValues();
+		this.RaceID = 0;
+		this.Sent = false;
+		this.Received = false;
+		this.Accepted = false;
+		this.Denied = false;
+	}
+}
+
+enum struct Race{
+	int ID;
+    int Race_Type; //0 - BASED ON TIMER | 1 - BASED ON 1ST TO COMPLETE
+    int Race_Time;
+    int Race_Points;
+    Racer Player1;
+    Racer Player2;
+    Racer Winner;
+    Invite Inv;
+
+	void SetDefaultValues() {
+		this.Player1.SetDefaultValues();
+		this.Player2.SetDefaultValues();
+		this.Winner.SetDefaultValues();
+		this.Inv.SetDefaultValues();
+		this.ID = 0;
+		this.Race_Type = 0;
+		this.Race_Time = 0;
+		this.Race_Points = 0;
+	}
+
+	Racer GetRacer(int racer_nr) {
+		if (racer_nr == 1)
+    		return this.Player1;
+		else
+			return this.Player2;
+  	}
+}
+
 /////
 //INCLUDES
 /////
@@ -93,6 +169,7 @@ enum struct TOP5_entry{
 #include "mc-api.sp"
 #include "mc-commands.sp"
 #include "mc-timers.sp"
+#include "mc-race.sp"
 
 public void OnPluginStart()
 {
@@ -131,6 +208,13 @@ public void OnMapStart()
 	//TIMER THAT CHECKS REGULARLY IF THE TIME REMAINING OF CURRENT CHALLENGE HAS RUN OUT
 	CreateTimer(30.0, Check_Challenge_End, INVALID_HANDLE, TIMER_FLAG_NO_MAPCHANGE | TIMER_REPEAT);
 	CreateTimer(350.0, Check_Challenge_Timeleft, INVALID_HANDLE, TIMER_FLAG_NO_MAPCHANGE | TIMER_REPEAT);
+
+	//CREATE BUFFERS FOR RACES
+	BUFFER_RacesList = new ArrayList(sizeof Race);
+	BUFFER_TempRacesList = new ArrayList(sizeof Race);
+
+	//CREATE BUFFERS FOR INVITATIONS
+	BUFFER_Invitations = new ArrayList(sizeof Invite);
 }
 
 public void OnClientPutInServer(int client)

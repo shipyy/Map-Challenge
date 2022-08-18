@@ -1,6 +1,6 @@
 public void CreateCMDS()
 {
-    //COMMANDS
+    //CHALLENGE COMMANDS
     RegConsoleCmd("sm_challenge", Challenge_Info, "[Map Challenge] Displays additional information of the ongoing challenge");
     RegConsoleCmd("sm_mcp", ChallengeProfile, "[Map Challenge] Displays the players profile");
     RegConsoleCmd("sm_mctop", TopLeaderBoard, "[Map Challenge] Displays the overall challenge top players (TOP 50) (TOP 50)");
@@ -9,7 +9,15 @@ public void CreateCMDS()
     RegAdminCmd("sm_add_challenge", Create_Challenge, ADMFLAG_ROOT, "[Map Challenge] Add new challenge");
     RegAdminCmd("sm_end_challenge", Manual_ChallengeEnd, ADMFLAG_ROOT, "[Map Challenge] Ends the ongoing challenge");
 
+    //RACE COMMANDS
+    RegConsoleCmd("sm_race", Client_Race, "[Map Challenge] Opens menu to setup a race");
+
 }
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////`````CHALLENGES`````////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 
 /////
 //CREATE CHALLENGE
@@ -236,6 +244,30 @@ public Action Challenge_Info(int client, int args)
         return Plugin_Handled;
 
     db_ChallengeInfo(client);
+
+    return Plugin_Handled;
+}
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////`````RACE`````///////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/////
+//RACES MAIN MENU
+/////
+public Action Client_Race(int client, int args)
+{   
+    if(!IsValidClient(client))
+        return Plugin_Handled;
+
+    Race NewRace;
+    NewRace.SetDefaultValues();
+    NewRace.ID = BUFFER_TempRacesList.Length;
+
+    BUFFER_TempRacesList.PushArray(NewRace);
+
+    Race_Menu(client, NewRace);
 
     return Plugin_Handled;
 }
