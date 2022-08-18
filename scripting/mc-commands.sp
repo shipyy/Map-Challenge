@@ -256,10 +256,13 @@ public Action Challenge_Info(int client, int args)
 /////
 public Action Client_Race(int client, int args)
 {   
-    if(!IsValidClient(client))
+    if (!IsValidClient(client))
         return Plugin_Handled;
 
-    if(g_bisWaitingResponse[client]) {
+    if (TotalPlayers() == 1)
+        return Plugin_Handled;
+
+    if (g_bisWaitingResponse[client]) {
         CPrintToChat(client, "ALREADY CREATED CHALLENGE WAITING FOR OPPONENTS RESPONSE");
         return Plugin_Handled;
     }
