@@ -288,6 +288,8 @@ public void InviteCancel(int InviteID)
     g_bisWaitingResponse[Player1.GetClientID()] = false;
     g_bisResponding[Player2.GetClientID()] = false;
 
+    tempInvite.SetReceived(true);
+    tempInvite.SetDenied(true);
     tempRace.SetRaceStatus(-1);
 
 }
@@ -295,6 +297,7 @@ public void InviteCancel(int InviteID)
 public void StartRace(int InviteID)
 {   
     Race tempRace;
+    Racer Player1,Player2;
     Invite tempInvite;
 
     BUFFER_RacesList.GetArray(InviteID, tempRace, sizeof tempRace);
@@ -303,10 +306,19 @@ public void StartRace(int InviteID)
     Stopwatch tempStopwatch;
     tempStopwatch.New(InviteID, tempRace.GetRaceTime(), g_RaceCountdown);
 
-    tempRace.SetRaceStatus(1);
+    Player1 = tempRace.GetRacer(1);
+    Player2 = tempRace.GetRacer(2);
 
-    if (tempRace.GetRaceType() == 0)
+    g_bInRace[Player1.GetClientID()] = true;
+    g_bInRace[Player2.GetClientID()] = true;
+
+    tempInvite.SetReceived(true);
+    tempInvite.SetAccepted(true);
+
+    if (tempRace.GetRaceType() == 0) {
         BUFFER_Stopwatches.PushArray(tempStopwatch, sizeof tempStopwatch);
+        tempRace.SetRaceStatus(1);
+    }
 }
 
 public int GetRaceIDFromClient(int client)
@@ -394,6 +406,11 @@ public void DisplayEndRaceHUD(int RaceID)
         ShowSyncHudText(Player2.GetClientID(), Stopwatch_Handle, "----- YOU WON -----");
         ShowSyncHudText(Player1.GetClientID(), Stopwatch_Handle, "----- YOU LOST ----");
     }
+
+    g_bisResponding[Player2.GetClientID()] = false;
+    g_bisWaitingResponse[Player1.GetClientID()] = false;
+    g_bInRace[Player1.GetClientID()] = false;
+    g_bInRace[Player2.GetClientID()] = false;
 
     RemoveFromBuffers(RaceID);
 }
