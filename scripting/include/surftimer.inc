@@ -143,6 +143,13 @@ native void surftimer_GetPlayerInfo(int& client, int& iWrcpTimer, int& iPracMode
  */
 native bool surftimer_SafeTeleport(int client, float fDestination[3], float fAngle[3], float fVelocity[3], bool bStopTimer = false);
 
+/**
+ * Teleport a client to the start.
+ *
+ * @param client					The client's ID.
+ */
+native bool surftimer_TeleportClient(int client);
+
 /*  FORWARDS  */
 
 /**

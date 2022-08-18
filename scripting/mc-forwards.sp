@@ -36,13 +36,13 @@ public Action surftimer_OnMapFinished(int client, float fRunTime, char sRunTime[
                 }
                 else {
                     tempRace.SetRaceStatus(-1);
-                    EndRace(client, tempRace.GetID());
+                    EndRace(tempRace.GetID());
                 }
             }
             //1ST COMPLETION RACE
             else {
                 tempRace.SetRaceStatus(-1);
-                EndRace(client, tempRace.GetID());
+                EndRace(tempRace.GetID());
             }
         }
     }

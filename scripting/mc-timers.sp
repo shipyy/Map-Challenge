@@ -57,6 +57,7 @@ public Action Check_RaceInvitations(Handle timer)
 
         if (!g_bInRace[Player2_ID] && !g_bisResponding[Player2_ID] && !TempInvite.GetReceived()) {
             TempInvite.SetSent(true);
+            BUFFER_Invitations.SetArray(TempInvite.GetID(), TempInvite, sizeof TempInvite);
             SendInvite(TempInvite);
         }
     }
@@ -68,14 +69,28 @@ public Action Check_RaceInvitations(Handle timer)
 //REPEATING TIMER THAT CLEANS INVITATIONS BUFFER
 /////
 public Action Cleaner_RaceInvitations(Handle timer)
-{
+{   
+    Race tempRace;
+    Racer Player1,Player2;
     Invite TempInvite;
+
     for (int i = 0; i < BUFFER_Invitations.Length; i++) {
         TempInvite.SetDefaultValues();
         BUFFER_Invitations.GetArray(i, TempInvite, sizeof TempInvite);
+        BUFFER_RacesList.GetArray(TempInvite.GetID(), tempRace, sizeof tempRace);
+
+        Player1 = tempRace.GetRacer(1);
+        Player2 = tempRace.GetRacer(2);
 
         if (TempInvite.GetReceived() && TempInvite.GetSent() && (TempInvite.GetAccepted() || TempInvite.GetDenied())) {
+            
+            g_bisResponding[Player2.GetClientID()] = false;
+            g_bisWaitingResponse[Player1.GetClientID()] = false;
+
+            tempRace.SetRaceStatus(-1);
+            BUFFER_RacesList.SetArray(TempInvite.GetID(), tempRace, sizeof tempRace);
             BUFFER_Invitations.Erase(TempInvite.GetID());
+            
         }
     }
 
@@ -126,21 +141,35 @@ public Action Stopwatches(Handle timer)
             FormatTimeFloat(0, time, szFormattedStopwatch, sizeof szFormattedStopwatch, true);
 
             //COUNTDOWN
-            if(tempStopwatch.GetTime() > (tempRace.GetRaceTime() - g_RaceCountdown )) {
-                SetHudTextParams(-1.0, -1.0, 0.1, 255, 255, 255, 255, 0, 0.0, 0.0, 0.0);
+            if(tempStopwatch.GetCountdown() > 0.0) {
 
-                char szCountDown[32];
-                Format(szCountDown, sizeof szCountDown, "%d", tempStopwatch.GetTime() - (tempRace.GetRaceTime() - g_RaceCountdown ));
-                ShowSyncHudText(Player1.GetClientID(), Stopwatch_Handle, "-----");
-                ShowSyncHudText(Player1.GetClientID(), Stopwatch_Handle, szFormattedStopwatch);
+                SetHudTextParams(-1.0, -1.0, 0.1, 255, 255, 255, 255, 0, 0.0, 0.0, 0.0);
+                ShowSyncHudText(Player1.GetClientID(), Stopwatch_Handle, "Race Will Start In\n-----%d-----", RoundToZero(tempStopwatch.GetCountdown()));
+                ShowSyncHudText(Player2.GetClientID(), Stopwatch_Handle, "Race Will Start In\n-----%d-----", RoundToZero(tempStopwatch.GetCountdown()));
+
+                tempStopwatch.CountdownDecrease();
+
+                BUFFER_Stopwatches.SetArray(tempStopwatch.GetRaceID(), tempStopwatch, sizeof tempStopwatch);
             }
             //IN RACE
             else {
-                SetHudTextParams(-1.0, 0.2, 0.1, 255, 255, 255, 255, 0, 0.0, 0.0, 0.0);
 
-                //SHOWHUD TO PLAYERS
-                ShowSyncHudText(Player1.GetClientID(), Stopwatch_Handle, szFormattedStopwatch);
-                ShowSyncHudText(Player2.GetClientID(), Stopwatch_Handle, szFormattedStopwatch);
+                //TP PLAYERS TO START
+                if (tempStopwatch.GetTime() == tempRace.GetRaceTime()) {
+                    surftimer_TeleportClient(Player1.GetClientID());
+                    surftimer_TeleportClient(Player2.GetClientID());
+                }
+
+                if (tempStopwatch.GetTime() > 0.0) {
+                    SetHudTextParams(-1.0, 0.2, 0.1, 255, 255, 255, 255, 0, 0.0, 0.0, 0.0);
+
+                    //SHOWHUD TO PLAYERS
+                    ShowSyncHudText(Player1.GetClientID(), Stopwatch_Handle, szFormattedStopwatch);
+                    ShowSyncHudText(Player2.GetClientID(), Stopwatch_Handle, szFormattedStopwatch);
+                }
+                else {
+                    EndRace(tempStopwatch.GetRaceID());
+                }
             }
         }
             

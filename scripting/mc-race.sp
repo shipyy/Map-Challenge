@@ -282,9 +282,6 @@ public void InviteCancel(int InviteID)
 
     CPrintToChat(Player1.GetClientID(), "%s denied the race invite", Player2.GetClientID());
 
-    BUFFER_Invitations.Erase(InviteID);
-    BUFFER_RacesList.Erase(InviteID);
-
     g_bisWaitingResponse[Player1.GetClientID()] = false;
     g_bisResponding[Player2.GetClientID()] = false;
 
@@ -292,6 +289,8 @@ public void InviteCancel(int InviteID)
     tempInvite.SetDenied(true);
     tempRace.SetRaceStatus(-1);
 
+    BUFFER_RacesList.SetArray(tempRace.GetID(), tempRace, sizeof tempRace);
+    BUFFER_Invitations.SetArray(tempRace.GetID(), tempInvite, sizeof tempInvite);
 }
 
 public void StartRace(int InviteID)
@@ -318,7 +317,10 @@ public void StartRace(int InviteID)
     if (tempRace.GetRaceType() == 0) {
         BUFFER_Stopwatches.PushArray(tempStopwatch, sizeof tempStopwatch);
         tempRace.SetRaceStatus(1);
+        BUFFER_RacesList.SetArray(tempRace.GetID(), tempRace, sizeof tempRace);
     }
+
+    //surftimer_SafeTeleport(,);
 }
 
 public int GetRaceIDFromClient(int client)
@@ -326,7 +328,7 @@ public int GetRaceIDFromClient(int client)
     return BUFFER_Stopwatches.FindValue(client, Stopwatch::Race_ID);
 }
 
-public void EndRace(int client, int RaceID)
+public void EndRace(int RaceID)
 {
     Race tempRace;
     Racer Player1,Player2;
@@ -360,14 +362,14 @@ public void EndRace(int client, int RaceID)
         DisplayEndRaceHUD(tempRace.GetID());
     }
     else {
-        if (client == Player1.GetClientID()) {
+        if (Player1.GetRuntime() > 0.0) {
             tempRace.SetWinner(Player1);
 
             SetHudTextParams(-1.0, -1.0, 5.0, 255, 255, 255, 255, 0, 0.0, 0.0, 0.0);
             ShowSyncHudText(Player1.GetClientID(), Stopwatch_Handle, "----- YOU WON -----");
             ShowSyncHudText(Player2.GetClientID(), Stopwatch_Handle, "%s Finished!\n----- YOU LOST ----", Player1.getClientName());
         }
-        else {
+        else if (Player2.GetRuntime() > 0.0){
             tempRace.SetWinner(Player2);
 
             SetHudTextParams(-1.0, -1.0, 5.0, 255, 255, 255, 255, 0, 0.0, 0.0, 0.0);
@@ -412,6 +414,7 @@ public void DisplayEndRaceHUD(int RaceID)
     g_bInRace[Player1.GetClientID()] = false;
     g_bInRace[Player2.GetClientID()] = false;
 
+    tempRace.SetRaceStatus(-1);
     RemoveFromBuffers(RaceID);
 }
 
@@ -419,5 +422,4 @@ public void RemoveFromBuffers(int RaceID)
 {
     BUFFER_Stopwatches.Erase(RaceID);
     BUFFER_Invitations.Erase(RaceID);
-    BUFFER_RacesList.Erase(RaceID);
 }

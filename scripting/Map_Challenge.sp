@@ -124,6 +124,15 @@ enum struct Stopwatch{
 	float GetCountdown() {
 		return this.countdown;
 	}
+
+	//SETTER
+	void CountdownDecrease() {
+		this.countdown -= 0.1;
+	}
+
+	void CountdownPlus() {
+		this.countdown += 0.1;
+	}
 }
 
 enum struct Racer{
@@ -427,7 +436,7 @@ public void OnMapStart()
 	CreateTimer(5.0, Check_RaceInvitations, INVALID_HANDLE, TIMER_FLAG_NO_MAPCHANGE | TIMER_REPEAT);
 	CreateTimer(5.0, Cleaner_RaceInvitations, INVALID_HANDLE, TIMER_FLAG_NO_MAPCHANGE | TIMER_REPEAT);
 	CreateTimer(5.0, Cleaner_Races, INVALID_HANDLE, TIMER_FLAG_NO_MAPCHANGE | TIMER_REPEAT);
-	CreateTimer(5.0, Stopwatches, INVALID_HANDLE, TIMER_FLAG_NO_MAPCHANGE | TIMER_REPEAT);
+	CreateTimer(0.1, Stopwatches, INVALID_HANDLE, TIMER_FLAG_NO_MAPCHANGE | TIMER_REPEAT);
 }
 
 public void OnClientPutInServer(int client)
