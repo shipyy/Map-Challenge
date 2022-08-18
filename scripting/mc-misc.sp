@@ -100,3 +100,14 @@ public int RoundUp(int value)
 {
 	return value += 10 - (value % 10);
 }
+
+public int TotalPlayers()
+{
+	int count = 0;
+
+	for (int i = 0; i <= MaxClients; i++)
+		if(IsValidClient(i) && !IsFakeClient(i))
+			count++;
+
+	return count;
+}
