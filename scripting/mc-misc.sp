@@ -100,3 +100,12 @@ public int RoundUp(int value)
 {
 	return value += 10 - (value % 10);
 }
+
+public bool IsPlayerChallengeAdmin(int client)
+{
+	if (IsValidClient(client) && !IsFakeClient(client))
+		if ((GetUserFlagBits(client) & g_iChallengeFlag) || (GetUserFlagBits(client) & ADMFLAG_ROOT))
+			return true;
+			
+	return false;
+}
