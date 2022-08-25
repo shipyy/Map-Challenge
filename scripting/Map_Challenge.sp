@@ -6,7 +6,7 @@ public Plugin myinfo =
 	name = "Map Challenges",
 	author = "https://github.com/shipyy",
 	description = "Allows Creation of challenges for surf maps",
-	version = "2.0.3",
+	version = "2.1.0",
 	url = "https://github.com/shipyy/Map-Challenge"
 };
 
