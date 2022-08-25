@@ -20,8 +20,8 @@ public Action Create_Challenge(int client, int args)
 
     if(!IsValidClient(client))
         return Plugin_Handled;
-
-    if(args != 4){
+    
+    if(args != 4) {
         CPrintToChat(client, "%t", "Add_Challenge_ERROR_Format", g_szChatPrefix);
         CPrintToChat(client, "Type {red}/time_acronyms{default} to all possible formats");
     }
@@ -111,6 +111,9 @@ public Action Manual_ChallengeEnd(int client, int args)
 {
     if (!IsValidClient(client))
 		return Plugin_Handled;
+    
+    if(!IsPlayerChallengeAdmin(client))
+        return Plugin_Handled;
 
     if(g_bIsChallengeActive)
         db_EndCurrentChallenge(client, g_iChallenge_ID);
