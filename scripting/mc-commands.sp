@@ -6,8 +6,8 @@ public void CreateCMDS()
     RegConsoleCmd("sm_mctop", TopLeaderBoard, "[Map Challenge] Displays the overall challenge top players (TOP 50) (TOP 50)");
     RegConsoleCmd("sm_mcct", LeaderBoard, "[Map Challenge] Displays the ongoing challenge leaderboard (TOP 50)");
     RegConsoleCmd("sm_mct", Challenge_Timeleft, "[Map Challenge] Displays remaining time left of the current challenge");
-    RegAdminCmd("sm_add_challenge", Create_Challenge, ADMFLAG_ROOT, "[Map Challenge] Add new challenge");
-    RegAdminCmd("sm_end_challenge", Manual_ChallengeEnd, ADMFLAG_ROOT, "[Map Challenge] Ends the ongoing challenge");
+    RegAdminCmd("sm_add_challenge", Create_Challenge, g_iChallengeFlag, "[Map Challenge] Add new challenge");
+    RegAdminCmd("sm_end_challenge", Manual_ChallengeEnd, g_iChallengeFlag, "[Map Challenge] Ends the ongoing challenge");
     RegConsoleCmd("sm_time_prefix", Misc_Time_Prefix, "[Map Challenge] Displays available time prefixes");
 
 }
