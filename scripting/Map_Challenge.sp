@@ -133,6 +133,10 @@ enum struct Stopwatch{
 	void CountdownPlus() {
 		this.countdown += 0.1;
 	}
+
+	void TimeDecrease() {
+		this.time -= 0.1;
+	}
 }
 
 enum struct Racer{
@@ -399,6 +403,8 @@ public void OnPluginStart()
 
 	ConVars_Create();
 
+	HookEvent("player_disconnect", Event_PlayerDisconnect, EventHookMode_Pre);
+
 	Stopwatch_Handle = CreateHudSynchronizer();
 }
 
@@ -445,4 +451,46 @@ public void OnClientPutInServer(int client)
 		return;
 
     GetClientAuthId(client, AuthId_Steam2, g_szSteamID[client], MAX_NAME_LENGTH, true);
+}
+
+public Action Event_PlayerDisconnect(Handle event, const char[] name, bool dontBroadcast)
+{
+	int clientid = GetEventInt(event, "userid");
+	int client = GetClientOfUserId(clientid);
+
+	if (IsValidClient(client) && !IsFakeClient(client)) {
+		if (g_bInRace[client]) {
+			//GET THE RACE ID
+			Race tempRace;
+			Racer Player1, Player2;
+
+			for (int i = 0; i < BUFFER_RacesList.Length; i++) {
+				tempRace.SetDefaultValues();
+				BUFFER_RacesList.GetArray(i, tempRace, sizeof tempRace);
+
+				Player1.SetDefaultValues();
+				Player2.SetDefaultValues();
+				Player1 = tempRace.GetRacer(1);
+				Player2 = tempRace.GetRacer(2);
+				
+				//END RACE
+				if(client == Player1.GetClientID())
+					EndRace(tempRace.GetID(), client);
+				else if (client == Player2.GetClientID())
+					EndRace(tempRace.GetID(), client);
+			}
+		}
+	}
+
+	return Plugin_Handled;
+}
+
+public void OnMapEnd()
+{
+	DeleteHandles();
+}
+
+public void OnPluginEnd()
+{
+	DeleteHandles();
 }

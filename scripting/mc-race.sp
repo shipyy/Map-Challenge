@@ -328,7 +328,7 @@ public int GetRaceIDFromClient(int client)
     return BUFFER_Stopwatches.FindValue(client, Stopwatch::Race_ID);
 }
 
-public void EndRace(int RaceID)
+void EndRace(int RaceID, int Disconnected = -1)
 {
     Race tempRace;
     Racer Player1,Player2;
@@ -344,38 +344,55 @@ public void EndRace(int RaceID)
     Player2 = tempRace.GetRacer(2);
 
     if (tempRace.GetRaceType() == 0) {
-        //PLAYER 1 WON
-        if (Player1.GetRuntime() > Player2.GetRuntime()) {
-            tempRace.SetWinner(Player1);
+        if(Disconnected != -1) {
+            //PLAYER 1 WON
+            if (Player1.GetRuntime() > Player2.GetRuntime()) {
+                tempRace.SetWinner(Player1);
+            }
+            //PLAYER 2 WON
+            else if (Player1.GetRuntime() < Player2.GetRuntime()) {
+                tempRace.SetWinner(Player2);
+            }
+            //DRAW
+            else {
+                Racer draw;
+                draw.setClientName("draw");
+                tempRace.SetWinner(draw);
+            }
         }
-        //PLAYER 2 WON
-        else if (Player1.GetRuntime() < Player2.GetRuntime()) {
-            tempRace.SetWinner(Player2);
-        }
-        //DRAW
         else {
-            Racer draw;
-            draw.setClientName("draw");
-            tempRace.SetWinner(draw);
+            if (Disconnected == Player1.GetClientID())
+                tempRace.SetWinner(Player2);
+            else
+                tempRace.SetWinner(Player1);
         }
 
         DisplayEndRaceHUD(tempRace.GetID());
     }
     else {
-        if (Player1.GetRuntime() > 0.0) {
-            tempRace.SetWinner(Player1);
+        if(Disconnected != -1) {
+            if (Player1.GetRuntime() > 0.0) {
+                tempRace.SetWinner(Player1);
 
-            SetHudTextParams(-1.0, -1.0, 5.0, 255, 255, 255, 255, 0, 0.0, 0.0, 0.0);
-            ShowSyncHudText(Player1.GetClientID(), Stopwatch_Handle, "----- YOU WON -----");
-            ShowSyncHudText(Player2.GetClientID(), Stopwatch_Handle, "%s Finished!\n----- YOU LOST ----", Player1.getClientName());
-        }
-        else if (Player2.GetRuntime() > 0.0){
-            tempRace.SetWinner(Player2);
+                SetHudTextParams(-1.0, -1.0, 5.0, 255, 255, 255, 255, 0, 0.0, 0.0, 0.0);
+                ShowSyncHudText(Player1.GetClientID(), Stopwatch_Handle, "----- YOU WON -----");
+                ShowSyncHudText(Player2.GetClientID(), Stopwatch_Handle, "%s Finished!\n----- YOU LOST ----", Player1.getClientName());
+            }
+            else if (Player2.GetRuntime() > 0.0){
+                tempRace.SetWinner(Player2);
 
-            SetHudTextParams(-1.0, -1.0, 5.0, 255, 255, 255, 255, 0, 0.0, 0.0, 0.0);
-            ShowSyncHudText(Player2.GetClientID(), Stopwatch_Handle, "----- YOU WON -----");
-            ShowSyncHudText(Player1.GetClientID(), Stopwatch_Handle, "%s Finished!\n----- YOU LOST ----", Player2.getClientName());
+                SetHudTextParams(-1.0, -1.0, 5.0, 255, 255, 255, 255, 0, 0.0, 0.0, 0.0);
+                ShowSyncHudText(Player2.GetClientID(), Stopwatch_Handle, "----- YOU WON -----");
+                ShowSyncHudText(Player1.GetClientID(), Stopwatch_Handle, "%s Finished!\n----- YOU LOST ----", Player2.getClientName());
+            }
         }
+        else {
+            if (Disconnected == Player1.GetClientID())
+                tempRace.SetWinner(Player2);
+            else
+                tempRace.SetWinner(Player1);
+        }
+
         DisplayEndRaceHUD(tempRace.GetID());
     }
 }
@@ -400,13 +417,21 @@ public void DisplayEndRaceHUD(int RaceID)
 
     if (WinnerID == Player1.GetClientID()) {
         SetHudTextParams(-1.0, -1.0, 5.0, 255, 255, 255, 255, 0, 0.0, 0.0, 0.0);
-        ShowSyncHudText(Player1.GetClientID(), Stopwatch_Handle, "----- YOU WON -----");
-        ShowSyncHudText(Player2.GetClientID(), Stopwatch_Handle, "----- YOU LOST ----");
+
+        if(IsValidClient(Player1.GetClientID()))
+            ShowSyncHudText(Player1.GetClientID(), Stopwatch_Handle, "----- YOU WON -----");
+        
+        if(IsValidClient(Player2.GetClientID()))
+            ShowSyncHudText(Player2.GetClientID(), Stopwatch_Handle, "----- YOU LOST ----");
     }
     else if (WinnerID == Player2.GetClientID()) {
         SetHudTextParams(-1.0, -1.0, 5.0, 255, 255, 255, 255, 0, 0.0, 0.0, 0.0);
-        ShowSyncHudText(Player2.GetClientID(), Stopwatch_Handle, "----- YOU WON -----");
-        ShowSyncHudText(Player1.GetClientID(), Stopwatch_Handle, "----- YOU LOST ----");
+        
+        if(IsValidClient(Player2.GetClientID()))
+            ShowSyncHudText(Player2.GetClientID(), Stopwatch_Handle, "----- YOU WON -----");
+        
+        if(IsValidClient(Player1.GetClientID()))
+            ShowSyncHudText(Player1.GetClientID(), Stopwatch_Handle, "----- YOU LOST ----");
     }
 
     g_bisResponding[Player2.GetClientID()] = false;

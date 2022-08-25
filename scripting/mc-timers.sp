@@ -115,7 +115,7 @@ public Action Cleaner_Races(Handle timer)
 }
 
 /////
-//REPEATING TIMER THAT CHECKS FOR NEW RACES STARTING
+//REPEATING TIMER THAT CHECKS FOR NEW RACES STARTING AND HANDLES THE ACTUALL RACES THEMSELVES
 /////
 public Action Stopwatches(Handle timer)
 {   
@@ -166,8 +166,10 @@ public Action Stopwatches(Handle timer)
                     //SHOWHUD TO PLAYERS
                     ShowSyncHudText(Player1.GetClientID(), Stopwatch_Handle, szFormattedStopwatch);
                     ShowSyncHudText(Player2.GetClientID(), Stopwatch_Handle, szFormattedStopwatch);
+
+                    tempStopwatch.TimeDecrease();
                 }
-                else {
+                else if (tempRace.GetRaceStatus() == -1 || tempStopwatch.GetTime() <= 0.0){
                     EndRace(tempStopwatch.GetRaceID());
                 }
             }

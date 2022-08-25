@@ -111,3 +111,11 @@ public int TotalPlayers()
 
 	return count;
 }
+
+public void DeleteHandles()
+{
+	delete BUFFER_TempRacesList;
+	delete BUFFER_RacesList;
+	delete BUFFER_Invitations;
+	delete BUFFER_Stopwatches;
+}
