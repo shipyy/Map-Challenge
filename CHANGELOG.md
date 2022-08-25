@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Fixed some some translations displaying wrong info
 
-**Full Changelog**: https://github.com/shipyy/Map-Challenge/compare/v2.0.2...v2.0.3
+**Full Changelog**: https://github.com/shipyy/Map-Challenge/compare/v2.0.3...v2.1.0
 
 ## [2.0.3]
 
