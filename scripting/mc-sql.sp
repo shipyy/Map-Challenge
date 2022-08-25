@@ -117,7 +117,7 @@ public void sql_CheckChallengeActiveCallback(Handle owner, Handle hndl, const ch
 }
 
 //CHALLENGE CREATION
-public void db_selectMapNameEquals(int client, char szMapName[32], int style, int points, float duration)
+public void db_selectMapNameEquals(int client, char szMapName[32], int style, int points, float duration, int type)
 {
     Handle pack = CreateDataPack();
     WritePackCell(pack, client);
@@ -125,6 +125,7 @@ public void db_selectMapNameEquals(int client, char szMapName[32], int style, in
     WritePackCell(pack, style);
     WritePackCell(pack, points);
     WritePackFloat(pack, duration);
+    WritePackCell(pack, type);
 
     char szQuery[256];
     Format(szQuery, sizeof(szQuery), "SELECT DISTINCT mapname FROM ck_zones WHERE mapname = '%s' LIMIT 1;", szMapName);
@@ -147,11 +148,12 @@ public void sql_selectMapNameEqualsCallback(Handle owner, Handle hndl, const cha
     int style = ReadPackCell(pack);
     int points = ReadPackCell(pack);
     float duration = ReadPackFloat(pack);
+    int type = ReadPackCell(pack);
     CloseHandle(pack);
     
     if (SQL_HasResultSet(hndl) && SQL_FetchRow(hndl))
 	{
-        db_AddChallenge(client, szMapName, style, points, duration);
+        db_AddChallenge(client, szMapName, style, points, duration, type);
 	}
 	else
 	{
@@ -159,7 +161,7 @@ public void sql_selectMapNameEqualsCallback(Handle owner, Handle hndl, const cha
 	}
 }
 
-public void db_AddChallenge(int client, char szMapName[32], int style, int points, float duration)
+public void db_AddChallenge(int client, char szMapName[32], int style, int points, float duration, int type)
 {
 
     if(StrEqual(szMapName, g_szMapName, false))
@@ -167,16 +169,29 @@ public void db_AddChallenge(int client, char szMapName[32], int style, int point
 
     char szQuery_Insert[1024];
 
-    int days;
-    int hours;
+    int duration_int;
+    int duration_decimal;
     char szStart[512];
     char szEnd[512];
 
-    days = RoundToZero(duration);
-    hours = RoundToZero(FloatAbs(FloatFraction(duration)) * 12 / 0.5);
-    Format(szStart, sizeof szStart, "UTC_TIMESTAMP(6)");
-    Format(szEnd, sizeof szStart, "UTC_TIMESTAMP(6) + INTERVAL %i DAY + INTERVAL %i HOUR", days, hours);
+    duration_int = RoundToZero(duration);
 
+    switch (type){
+        case 0 : {
+            duration_decimal = RoundToZero(FloatAbs(FloatFraction(duration)) * 24);
+            Format(szEnd, sizeof szStart, "UTC_TIMESTAMP(6) + INTERVAL %i DAY + INTERVAL %i HOUR", duration_int, duration_decimal);
+        }
+        case 1 : {
+            duration_decimal = RoundToZero(FloatAbs(FloatFraction(duration)) * 60);
+            Format(szEnd, sizeof szStart, "UTC_TIMESTAMP(6) + INTERVAL %i HOUR + INTERVAL %i MINUTE", duration_int, duration_decimal);
+        }
+        case 2 : {
+            duration_decimal = RoundToZero(FloatAbs(FloatFraction(duration)) * 60);
+            Format(szEnd, sizeof szStart, "UTC_TIMESTAMP(6) + INTERVAL %i MINUTE + INTERVAL %i SECOND", duration_int, duration_decimal);
+        }
+    }
+
+    Format(szStart, sizeof szStart, "UTC_TIMESTAMP(6)");
     Format(szQuery_Insert, sizeof(szQuery_Insert), sql_InsertChallenge, szMapName, szStart, szEnd, style, points, 1);
 
     Transaction add_challange_transactions = SQL_CreateTransaction();
@@ -276,6 +291,7 @@ public void sql_DistributePointsCallback(Handle owner, Handle hndl, const char[]
         int rank = 1;
         float winner_runtime;
         char szPlayerSteamID[32];
+        char szWinnerName[MAX_NAME_LENGTH];
         int style;
         int points_to_add;
         while(SQL_FetchRow(hndl)){
@@ -300,6 +316,9 @@ public void sql_DistributePointsCallback(Handle owner, Handle hndl, const char[]
 
                 SQL_FetchString(hndl, 2, temp.szPlayerName, sizeof(temp.szPlayerName));
 
+                if(rank == 1)
+                    szWinnerName = temp.szPlayerName;
+
                 float temp_runtime;
                 temp_runtime = SQL_FetchFloat(hndl, 4);
                 FormatTimeFloat(client, temp_runtime, temp.szRuntimeFormatted, sizeof temp.szRuntimeFormatted, true);
@@ -317,8 +336,9 @@ public void sql_DistributePointsCallback(Handle owner, Handle hndl, const char[]
             rank++;
         }
 
-        CPrintToChatAll("%t", "Challenge_Points_Distributed", g_szChatPrefix);
+        CPrintToChatAll("%t", "Challenge_Points_Distributed", g_szChatPrefix, nr_players);
         CPrintToChatAll("%t", "Challenge_Ended", g_szChatPrefix, nr_players, g_sChallenge_MapName);
+        CPrintToChatAll("%t", "Challenge_Winner", g_szChatPrefix, szWinnerName);
     }
 
     ResetDefaults();

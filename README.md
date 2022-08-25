@@ -7,13 +7,7 @@ You can customize the map, style, duration of the callenge and points received.
 
 ## Installation
 
-* Download Release Files and simply drag and drop onto your csgo folder
-
-`csgo/addons/sourcemod/plugins/Map_Challenge.smx`
-
-`csgo/addons/sourcemod/scripting/include/map-challenge.inc`
-
-`csgo/addons/sourcemod/translations/mapchallenge.phrases.txt`
+* Download [latest release](https://github.com/shipyy/Map-Challenge/releases/latest), exctract and drop the contents of `MapChallenge.zip` into your `csgo/addons/sourcemod` folder
 
 ## Requirements
 
@@ -41,15 +35,19 @@ You can customize the map, style, duration of the callenge and points received.
 
 ## How To
 
-Command | Description | Usage
-:---|:---|:---:
-`sm_add_challenge` | Add new challenge | ```sm_add_challenge <mapname> <style> <top1_points> <duration>``` *duration is in days*
+Command | Description | Usage | Prefixes
+:---|:---|:---:|:---
+`sm_add_challenge` | Add new challenge | ```sm_add_challenge <mapname> <style> <top1_points> <<time_prefix>duration>``` | **d** OR **D** - Days **h** OR **h** - Hours **m** OR **m** - Minutes
 `sm_end_challenge` | Ends the ongoing challenge |
 `sm_challenge` | Displays additional information of the ongoing challenge |
 `sm_mcp` | Displays the players profile |
 `sm_mctop` | Displays the overall challenge top players (TOP 50) |
 `sm_mcct` | Displays the ongoing challenge leaderboard (TOP 50) |
 `sm_mct` | Displays remaining time left of the current challenge |
+
+## Example of creating a New Challenge
+**!add_challenge surf_beginner #n 420 d1.5** - This would create a Challenge for **1 day and a half** in **Normal** style with the **Winner** receiving 420 points
+**!add_challenge surf_beginner #hsw 666 h0.5** - This would create a Challenge for **half an hour** in **Half-Sideways** style with the **Winner** receiving 666 points
 
 ## More Details
 * The plugin only allows 1 challenge occuring at the same time (for now idk)
@@ -60,6 +58,7 @@ Command | Description | Usage
 
 ## Future Ideas
 * Discord Integration (Done)
-* Multiple Challenges (?)
+* Multiple Challenges (Coming Soon TM)
 * Better point distribuition (?)
 * Add discord notification when the challenge has ended with the player who won (Done)
+* Racing (1vs1) (In development)

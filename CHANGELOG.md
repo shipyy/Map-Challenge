@@ -6,11 +6,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.1.0]
 
+### Changed
+
+- Re-did some section of `README`
+
 ### Added
 
-- Added Convar to specify the required flag to manage Challenges
+- Added time prefixes (d, h and m)
+- Added translation with Winner's name
+- Added command to display the available time prefixes
 
-**Full Changelog**: https://github.com/shipyy/Map-Challenge/compare/v2.0.2...v2.0.3
+### Fixed
+
+- Fixed some some translations displaying wrong info
+
+**Full Changelog**: https://github.com/shipyy/Map-Challenge/compare/v2.0.3...v2.1.0
 
 ## [2.0.3]
 

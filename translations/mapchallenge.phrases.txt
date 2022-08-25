@@ -3,22 +3,22 @@
     "Challenge_Added"
 	{
 		"#format"	"{1:s},{2:s}"
-		"en"		"{1}{default} Added new challenge for {red}{2}"
+		"en"		"{1}{default} Added new {green}!challenge{default} for {red}{2}"
 	}
     "Challenge_Active"
 	{
 		"#format"	"{1:s}"
-		"en"		"{1}{default} There is an {red}ongoing {green}!challenge"
+		"en"		"{1}{default} There is an ongoing {green}!challenge"
 	}
     "Challenge_Inactive"
 	{
 		"#format"	"{1:s}"
-		"en"		"{1}{default} There is {red}no challenge{default} going on"
+		"en"		"{1}{default} There is no {red}challenge{default} going on"
 	}
     "Challenge_Ended"
 	{
 		"#format"	"{1:s},{2:i},{3:s}"
-		"en"		"{1}{default} Challenge {yellow}{3} {red}ended{default} with {yellow}{2}{default} participants"
+		"en"		"{1}{default} Challenge on {yellow}{3}{default} ended with {blue}{2}{default} participant(s)"
 	}
     "Challenge_Timeleft"
 	{
@@ -28,7 +28,7 @@
     "Add_Challenge_ERROR_Format"
 	{
 		"#format"	"{1:s}"
-		"en"		"{1}{default} {red}Usage:{yellow} sm_add_challenge <mapname> #<style_acronym> <points> <duration>"
+		"en"		"{1}{default} {red}Usage:{yellow} sm_add_challenge <mapname> #<style_acronym> <points> <<time_prefix>duration>"
 	}
     "Map_Not_Valid"
 	{
@@ -38,12 +38,17 @@
     "Challenge_LeaderBoard_Empty"
 	{
 		"#format"	"{1:s}"
-		"en"		"{1}{default} There are {red}no times{default} set for the challenge yet..."
+		"en"		"{1}{default} There are {red}0 times{default} set for the challenge yet..."
 	}
     "Challenge_Points_Distributed"
 	{
-		"#format"	"{1:s}"
-		"en"		"{1}{default} Rewards have been {green}distributed{default} to {yellow}Top 5{default} participants"
+		"#format"	"{1:s}, {2:i}"
+		"en"		"{1}{default} Rewards have been {green}distributed{default} to {blue}{2}{default} participant(s)"
+	}
+	"Challenge_Winner"
+	{
+		"#format"	"{1:s},{2:s}"
+		"en"		"{1}{default} Winner is {red}{2}{default}!"
 	}
 	"Overall_Challenge_LeaderBoard_Empty"
 	{
@@ -74,5 +79,10 @@
 	{
 		"#format"	"{1:s},{2:s}"
 		"en"		"{1}{default} {red}Player {yellow}{2}{red} not found"
+	}
+	"Time_Prefix"
+	{
+		"#format"	"{1:s}"
+		"en"		"{1}{default} {red}d{default} - days | {red}h{default} - hours | {red}m{default} - minutes"
 	}
 }
