@@ -63,7 +63,9 @@ char g_szStyleAcronyms[][] =
 // Client's steamID
 char g_szSteamID[MAXPLAYERS + 1][32];
 
+//VALUES FROM CVARS
 char g_szChatPrefix[64];
+int g_iChallengeFlag;
 
 /////
 //FORWARDS
@@ -114,7 +116,7 @@ public void OnPluginStart()
 
 public void OnConfigsExecuted()
 {
-    GetConVarString(g_sChatPrefix, g_szChatPrefix, sizeof g_szChatPrefix);
+    Convars_Get();
 }
 
 public void OnMapStart()
