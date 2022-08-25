@@ -8,6 +8,7 @@ public void CreateCMDS()
     RegConsoleCmd("sm_mct", Challenge_Timeleft, "[Map Challenge] Displays remaining time left of the current challenge");
     RegAdminCmd("sm_add_challenge", Create_Challenge, ADMFLAG_ROOT, "[Map Challenge] Add new challenge");
     RegAdminCmd("sm_end_challenge", Manual_ChallengeEnd, ADMFLAG_ROOT, "[Map Challenge] Ends the ongoing challenge");
+    RegConsoleCmd("sm_time_prefix", Misc_Time_Prefix, "[Map Challenge] Displays available time prefixes");
 
 }
 
@@ -20,8 +21,10 @@ public Action Create_Challenge(int client, int args)
     if(!IsValidClient(client))
         return Plugin_Handled;
 
-    if(args != 4)
+    if(args != 4){
         CPrintToChat(client, "%t", "Add_Challenge_ERROR_Format", g_szChatPrefix);
+        CPrintToChat(client, "Type {red}/time_acronyms{default} to all possible formats");
+    }
     else{
         //GET ARGUMENTS VALUES
         char szMapName[32];
@@ -51,6 +54,7 @@ public Action Create_Challenge(int client, int args)
         }
         else {
             CPrintToChat(client, "%t", "Add_Challenge_ERROR_Format", g_szChatPrefix);
+            CPrintToChat(client, "Type {red}/time_acronyms{default} to all possible formats");
             return Plugin_Handled;
         }
 
@@ -60,10 +64,39 @@ public Action Create_Challenge(int client, int args)
 
         char szduration[32];
         GetCmdArg(4, szduration, sizeof(szduration));
-        float duration = StringToFloat(szduration);
+        float duration;
+        int type;
+        if (szduration[0] == 'd' || szduration[0] == 'D') {
+            if (szduration[0] == 'd')
+                ReplaceString(szduration, sizeof szduration, "d", "", false);
+            else
+                ReplaceString(szduration, sizeof szduration, "D", "", false);
+            type = 0;
+        }
+        else if(szduration[0] == 'h' || szduration[0] == 'H'){
+            if (szduration[0] == 'h')
+                ReplaceString(szduration, sizeof szduration, "h", "", false);
+            else
+                ReplaceString(szduration, sizeof szduration, "H", "", false);
+            type = 1;
+        }
+        else if(szduration[0] == 'm' || szduration[0] == 'M'){
+            if (szduration[0] == 'm')
+                ReplaceString(szduration, sizeof szduration, "m", "", false);
+            else
+                ReplaceString(szduration, sizeof szduration, "M", "", false);
+            type = 2;
+        }
+        else {
+            CPrintToChat(client, "%t", "Add_Challenge_ERROR_Format", g_szChatPrefix);
+            CPrintToChat(client, "Type {red}/time_acronyms{default} to all possible formats");
+            return Plugin_Handled;
+        }
+
+        duration = StringToFloat(szduration);
 
         if(!g_bIsChallengeActive)
-            db_selectMapNameEquals(client, szMapName, style, points, duration);
+            db_selectMapNameEquals(client, szMapName, style, points, duration, type);
         else
             CPrintToChat(client, "%t", "Challenge_Active", g_szChatPrefix);
     }
@@ -236,6 +269,19 @@ public Action Challenge_Info(int client, int args)
         return Plugin_Handled;
 
     db_ChallengeInfo(client);
+
+    return Plugin_Handled;
+}
+
+/////
+//DISPLAY TIME PREFIXES
+/////
+public Action Misc_Time_Prefix(int client, int args)
+{   
+    if(!IsValidClient(client))
+        return Plugin_Handled;
+
+    CPrintToChat(client, "%t", "Time_Prefix", g_szChatPrefix);
 
     return Plugin_Handled;
 }
