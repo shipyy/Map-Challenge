@@ -3,17 +3,17 @@
     "Challenge_Added"
 	{
 		"#format"	"{1:s},{2:s}"
-		"en"		"{1}{default} Added new challenge for {red}{2}"
+		"en"		"{1}{default} Added new {green}!challenge{default} for {red}{2}"
 	}
     "Challenge_Active"
 	{
 		"#format"	"{1:s}"
-		"en"		"{1}{default} There is an {red}ongoing {green}!challenge"
+		"en"		"{1}{default} There is an ongoing {green}!challenge"
 	}
     "Challenge_Inactive"
 	{
 		"#format"	"{1:s}"
-		"en"		"{1}{default} There is {red}no challenge{default} going on"
+		"en"		"{1}{default} There is no {red}challenge{default} going on"
 	}
     "Challenge_Ended"
 	{
@@ -38,7 +38,7 @@
     "Challenge_LeaderBoard_Empty"
 	{
 		"#format"	"{1:s}"
-		"en"		"{1}{default} There are {red}no times{default} set for the challenge yet..."
+		"en"		"{1}{default} There are {red}0 times{default} set for the challenge yet..."
 	}
     "Challenge_Points_Distributed"
 	{
