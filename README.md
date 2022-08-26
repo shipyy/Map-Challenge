@@ -35,19 +35,49 @@ You can customize the map, style, duration of the callenge and points received.
 
 ## How To
 
-Command | Description | Usage | Prefixes
-:---|:---|:---:|:---
-`sm_add_challenge` | Add new challenge | ```sm_add_challenge <mapname> <style> <top1_points> <<time_prefix>duration>``` | **d** OR **D** - Days **h** OR **h** - Hours **m** OR **m** - Minutes
-`sm_end_challenge` | Ends the ongoing challenge |
-`sm_challenge` | Displays additional information of the ongoing challenge |
-`sm_mcp` | Displays the players profile |
-`sm_mctop` | Displays the overall challenge top players (TOP 50) |
-`sm_mcct` | Displays the ongoing challenge leaderboard (TOP 50) |
-`sm_mct` | Displays remaining time left of the current challenge |
+Command | Description
+:---|:---
+`sm_add_challenge` | Add new challenge
+`sm_end_challenge` | Ends the ongoing challenge
+`sm_challenge` | Displays additional information of the ongoing challenge
+`sm_mcp` | Displays the players profile
+`sm_mctop` | Displays the overall challenge top players (TOP 50)
+`sm_mcct` | Displays the ongoing challenge leaderboard (TOP 50)
+`sm_mct` | Displays remaining time left of the current challenge
 
-## Example of creating a New Challenge
-**!add_challenge surf_beginner #n 420 d1.5** - This would create a Challenge for **1 day and a half** in **Normal** style with the **Winner** receiving 420 points
-**!add_challenge surf_beginner #hsw 666 h0.5** - This would create a Challenge for **half an hour** in **Half-Sideways** style with the **Winner** receiving 666 points
+### Prefixes
+
+<table
+<tr><th>Style</th><th>Time</th></tr>
+<tr><td>
+
+Prefix | Description
+:---|:---
+n | Normal
+sw | Sideways
+hsw | Half-Sideways
+bw | Backwards
+lg | Low-Gravity
+sm | Slow Motion
+ff | Fast Forward
+fs | Freestyle
+
+</td><td>
+
+Prefix | Description
+:---|:---
+ **d** OR **D** | Days
+ **h** OR **H** | Hours
+ **m** OR **M** | Minutes
+
+</td></tr> </table>
+
+### Examples of creating a New Challenge
+
+**Command Format** - ```sm_add_challenge <mapname> <style> <top1_points> <<time_prefix>duration>```
+
+```/add_challenge surf_beginner #n 420 d1.5``` - Creates a Challenge for ***1 day and a half*** in ***Normal*** style with the ***Winner*** receiving 420 points\
+```/add_challenge surf_beginner #hsw 666 h0.5``` - Creates a Challenge for ***half an hour*** in ***Half-Sideways*** style with the ***Winner*** receiving 666 points
 
 ## More Details
 * The plugin only allows 1 challenge occuring at the same time (for now idk)
