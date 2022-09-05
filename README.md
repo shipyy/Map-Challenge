@@ -9,6 +9,12 @@ You can customize the map, style, duration of the callenge and points received.
 
 * Download [latest release](https://github.com/shipyy/Map-Challenge/releases/latest), exctract and drop the contents of `MapChallenge.zip` into your `csgo/addons/sourcemod` folder
 
+***NOTE***
+
+if you are using **Maria DB**, before restarting server after dropping installation files run this query:
+`CREATE TABLE IF NOT EXISTS ck_challenge_times (id INT(12) NOT NULL, steamid VARCHAR(32), name VARCHAR(32), mapname VARCHAR(32), runtime decimal(12, 6) NOT NULL DEFAULT '0.000000', style INT(12) NOT NULL DEFAULT '0', Run_Date TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), PRIMARY KEY(id, steamid, mapname, runtime)) DEFAULT CHARSET=utf8mb4;`
+
+
 ## Requirements
 
 **Plugins**
