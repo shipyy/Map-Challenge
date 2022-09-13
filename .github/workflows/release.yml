@@ -53,7 +53,7 @@ jobs:
         uses: montudor/action-zip@v1
 
       - name: Zip
-        run: zip -qq -r MapChallenge-v${{ steps.changelog_reader.outputs.version }}.zip plugins translations scripting/include
+        run: zip -qq -r MapChallenge-v${{ steps.changelog_reader.outputs.version }}.zip plugins my-sql-scripts translations scripting/include
         working-directory: ${{ env.HOME_PATH }}
 
       - name: Create Release

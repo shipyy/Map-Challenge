@@ -68,7 +68,7 @@
 	"style_not_found"
 	{
 		"#format"	"{1:s}"
-		"en"		"{1}{default} {red}Wrong style{default}, type {yellow}!acronyms{default} to see all the available {red}styles"
+		"en"		"{1}{default} {red}Wrong style{default}, type {yellow}!style_acronyms{default} to see all the available {red}styles"
 	}
 	"player_data_not_found"
 	{
