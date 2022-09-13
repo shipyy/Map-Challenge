@@ -42,7 +42,7 @@
 	}
     "Challenge_Points_Distributed"
 	{
-		"#format"	"{1:s}, {2:i}"
+		"#format"	"{1:s},{2:i}"
 		"en"		"{1}{default} Rewards have been {green}distributed{default} to {blue}{2}{default} participant(s)"
 	}
 	"Challenge_Winner"
