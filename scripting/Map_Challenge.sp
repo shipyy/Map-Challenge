@@ -6,7 +6,7 @@ public Plugin myinfo =
 	name = "Map Challenges",
 	author = "https://github.com/shipyy",
 	description = "Allows Creation of challenges for surf maps",
-	version = "2.3.0",
+	version = "2.3.1",
 	url = "https://github.com/shipyy/Map-Challenge"
 };
 
@@ -143,7 +143,7 @@ public void OnClientPutInServer(int client)
     GetClientAuthId(client, AuthId_Steam2, g_szSteamID[client], MAX_NAME_LENGTH, true);
 }
 
-public Action surftimer_OnMapFinished(int client, float fRunTime, char sRunTime[54], int rank, int total, int style)
+public Action surftimer_OnMapFinished(int client, float fRunTime, char sRunTime[54], float PBDiff, float WRDiff, int rank, int total, int style)
 {
 	if(g_bIsCurrentMapChallenge && g_bIsChallengeActive && (g_iChallenge_Style == style))
 		db_PlayerExistsCheck(client, fRunTime, style);

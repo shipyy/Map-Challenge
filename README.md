@@ -12,7 +12,7 @@ You can customize the map, style, duration of the callenge and points received.
 ## Requirements
 
 **Plugins**
-*  (*required*) [SurfTimer](https://github.com/surftimer/SurfTimer)
+*  (*required*) [SurfTimer](https://github.com/surftimer/SurfTimer) (*Only versions above 1.1.2 supported*)
 * (*optional*) [SurfTimer-Discord](https://github.com/surftimer/SurfTimer-discord)
 
 ## Showcase
