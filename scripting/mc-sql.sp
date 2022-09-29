@@ -374,10 +374,10 @@ public void finished_challenge_transaction_Success(Handle db, any client, int nu
 
 public void finished_challenge_transaction_Failed(Handle db, any pack, int numQueries, const char[] error, int failIndex, any[] queryData)
 {
-    if (strcmp(error, "",false) != 0)
-	    LogError("[MapChallenge] SQL Error (finished_challenge_transaction): %s", error);
-    else
+    if (StrContains(error, "Duplicate entry", false) != -1)
         PrintToServer("[MapChallenge] Finished Challenge Transaction already performed by another server!");
+    else
+        LogError("[MapChallenge] SQL Error (finished_challenge_transaction): %s", error);
 }
 
 public void db_UpdateFinishedChallengeData(int client, char szPlayerSteamID[32], int nr_players)
@@ -386,7 +386,6 @@ public void db_UpdateFinishedChallengeData(int client, char szPlayerSteamID[32],
     Format(szQuery, sizeof(szQuery), sql_UpdateFinishedChallengeData, szPlayerSteamID, nr_players, g_sChallenge_MapName, g_iChallenge_Style, g_iChallenge_Points, g_iChallenge_ID);
     SQL_TQuery(g_hDb, SQL_CheckCallback, szQuery, DBPrio_Low); 
 }
-
 
 /////
 //ON MAP FINISHED DATA HANDLING
